@@ -1,0 +1,24 @@
+.user-page {
+  min-height: 100vh;
+  background: #f9f9f9;
+}
+
+.profile-card {
+  background: #fff;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.profile-imagee {
+  border: 3px solid #6C5DFB; /* purple border */
+}
+
+.user-name {
+  font-weight: bold;
+  color: #333;
+}
+
+.user-email, .user-phone {
+  color: #666;
+}

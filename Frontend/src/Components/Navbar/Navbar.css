@@ -1,0 +1,60 @@
+
+.sidebar {
+  background-color: #131a2c;
+  width: 60px;
+  height: 100vh; /* full height */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1rem;
+  position: fixed; /* stays on left */
+  left: 0;
+  top: 0;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* gap: 10px; */
+}
+
+.brand {
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 20px;
+  color: white;
+  text-decoration: none;
+}
+
+.sidebar-list {
+  list-style: none;
+  padding: 0;
+  margin: 2rem 0;
+  display: flex;
+  flex : 1;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.sidebar-list li a {
+  text-decoration: none;
+  color: gray;
+  font-size: 16px;
+}
+
+.active-link {
+  color: #8162fb !important;
+  font-weight: bold;
+}
+
+.sidebar-footer {
+  display: flex;
+  margin-top: auto;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.btn-text{
+    color: white;
+}

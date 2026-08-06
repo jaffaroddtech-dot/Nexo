@@ -1,0 +1,194 @@
+  .nexo-page {
+      min-height: 100vh;
+      background-color: #EEF0FA;
+  }
+
+  .nexo-header {
+      background-color: #131a2c;
+      padding: 0.75rem 1.5rem;
+  }
+
+  .nexo-logo-box {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background-color: #6C5DFB;
+      color: #fff;
+      font-weight: 700;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+  }
+
+  .nexo-logo-text {
+      font-family: "Bebas Neue", sans-serif;
+      font-weight: 900;
+      font-style: normal;
+      font-size: 24px;
+      color: white;
+  }
+
+  .nexo-card {
+      max-width: 420px;
+      width: 100%;
+      background-color: #fff;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 10px 30px rgba(20, 20, 60, 0.08);
+      border: none;
+  }
+
+  .nexo-icon-box {
+      /* width: 56px; */
+      height: 56px;
+      border-radius: 14px;
+      color: #fff;
+      font-weight: 700;
+      font-size: 1.4rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1rem auto;
+  }
+
+  .nexo-title {
+      color: #0E1326;
+      font-weight: 700;
+  }
+
+  .nexo-subtitle {
+      color: #6c757d;
+      font-size: 0.9rem;
+  }
+
+  .nexo-label {
+      color: #0E1326;
+      font-weight: 500;
+      font-size: 0.9rem;
+  }
+
+  .nexo-input {
+      background-color: #F7F8FD;
+      border: 1px solid #E3E5F5 !important;
+      border-radius: 10px;
+      color: #0E1326;
+      display: block;
+      width: 100%;
+      padding: .375rem .75rem;
+      font-size: 1rem;
+      font-weight: 400;
+      line-height: 1.5;
+  }
+
+  .nexo-input:focus {
+      border-color: #6C5DFB !important;
+      /* box-shadow: 0 0 5px #8e82ff, 0 0 5px #8e82ff !important; */
+      box-shadow: 0 0 0 0.2rem rgba(108, 93, 251, 0.15);
+      background-color: #F7F8FD;
+      color: #0E1326;
+      outline: none;
+  }
+
+
+  .nexo-link {
+      color: #6C5DFB;
+      font-weight: 500;
+      font-size: 0.85rem;
+      text-decoration: none;
+  }
+
+  .nexo-link:hover {
+      color: #5847e0;
+      text-decoration: underline;
+  }
+
+  .nexo-input-wrapper {
+      position: relative;
+      /* parent container for input + button */
+  }
+
+  .nexo-toggle-btnn {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      /* center vertically inside input */
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: #6c757d;
+      font-size: 0.8rem;
+      font-weight: 500;
+      padding: 0;
+      cursor: pointer;
+  }
+
+  .nexo-toggle-btnn:hover {
+      color: #0E1326;
+  }
+
+
+  .nexo-toggle-btn:hover {
+      color: #0E1326;
+  }
+
+  .nexo-btn-primary {
+      background-color: #6C5DFB;
+      border: none;
+      border-radius: 10px;
+      padding: 0.65rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #fff;
+  }
+
+  .nexo-btn-primary:hover {
+      background-color: #5847e0;
+      color: #fff;
+  }
+
+  .nexo-divider-line {
+      flex: 1;
+      height: 1px;
+      background-color: #E3E5F5;
+  }
+
+  .nexo-divider-text {
+      color: #adb5bd;
+      font-size: 0.8rem;
+      white-space: nowrap;
+  }
+
+  .nexo-btn-social {
+      border: 1px solid #E3E5F5;
+      border-radius: 10px;
+      padding: 0.55rem;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #0E1326;
+      background-color: #fff;
+  }
+
+  .nexo-btn-social:hover {
+      background-color: #F7F8FD;
+      color: #0E1326;
+      border-color: #E3E5F5;
+  }
+
+  .nexo-footer-text {
+      color: #6c757d;
+      font-size: 0.9rem;
+  }
+
+  .nexo-check-label {
+      color: #6c757d;
+      font-size: 0.9rem;
+  }
+
+
+  .error {
+      font-size: 10px;
+      font-weight: 500;
+      margin-top: 5px;
+      margin-bottom: 0px;
+  }
