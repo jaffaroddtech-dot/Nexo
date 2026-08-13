@@ -12,7 +12,7 @@ const generateToken = (id) => {
 exports.register = async (req, res) => {
   try {
     console.log(req.body)
-    const { name, phoneNumber, password } = req.body;
+    const { name, phoneNumber, password, country, bio } = req.body;
 
     const existingPhone = await User.findOne({ phoneNumber });
     if (existingPhone) {
@@ -23,7 +23,7 @@ exports.register = async (req, res) => {
     }
 
     // Create new user
-    const newUser = await User.create({ name, password, phoneNumber, online:false });
+    const newUser = await User.create({ name, password, phoneNumber, online:false , country, bio});
 
     return res.status(201).json({
       message: "Account created successfully",
@@ -31,6 +31,8 @@ exports.register = async (req, res) => {
         _id: newUser._id,
         name: newUser.name,
         phoneNumber: newUser.phoneNumber,
+        country: newUser.country,
+        bio: newUser.bio,
       },
       token: generateToken(newUser._id),
       status: true,

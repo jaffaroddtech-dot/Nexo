@@ -3,9 +3,9 @@ const bcrypt = require("bcryptjs");
 
 const userSchema = new mongoose.Schema(
   {
-    name :{
-      type:String,
-      required:true,
+    name: {
+      type: String,
+      required: true,
     },
     password: {
       type: String,
@@ -15,14 +15,20 @@ const userSchema = new mongoose.Schema(
     },
     phoneNumber: {
       type: String,
-      unique:true,
+      unique: true,
       required: true,
       trim: true,
     },
-    online:{
-      type:Boolean,
-      default:false
-    }
+    online: {
+      type: Boolean,
+      default: false
+    },
+    contacts: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Contact"
+    }],
+    bio: { type: String, default: "Hey there! I'm using Nexo" },
+    country: { type: String, default: "" },
   },
   { timestamps: true }
 );

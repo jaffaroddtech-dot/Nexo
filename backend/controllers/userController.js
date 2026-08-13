@@ -56,19 +56,35 @@ exports.getUserById = async (req, res) => {
   }
 };
 
+// --- UPDATE USER ---
 exports.updateUser = async (req, res) => {
+  console.log("Update request body:", req.user._id);
   try {
-    const updatedUser = await User.findByIdAndUpdate(req.params.id, req.body, {
-      new: true,
-      runValidators: true,
-    });
-    if (!updatedUser) {
+    const userId = req.user._id;
+
+    const user = await User.findById(userId);
+    if (!user) {
       return res.status(404).json({ message: "User not found", status: false });
     }
 
+    const { name, bio, country } = req.body;
+
+    if (name && name !== user.name) user.name = name;
+    if (bio && bio !== user.bio) user.bio = bio;
+    if (country && country !== user.country) user.country = country;
+
+
+    await user.save();
+
     return res.status(200).json({
       message: "User updated successfully",
-      data: updatedUser,
+      data: {
+        _id: user._id,
+        name: user.name,
+        phoneNumber: user.phoneNumber,
+        bio: user.bio,
+        country: user.country,
+      },
       status: true,
     });
   } catch (error) {
@@ -79,6 +95,7 @@ exports.updateUser = async (req, res) => {
     });
   }
 };
+
 
 exports.deleteUser = async (req, res) => {
   try {
