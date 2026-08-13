@@ -26,7 +26,7 @@ const Home = () => {
   //---Guest interface
   if (!user) {
     return (
-      <HomeNot/>
+      <HomeNot />
     );
   }
 
@@ -35,73 +35,74 @@ const Home = () => {
     <div className="Main">
 
       {/* Left Side */}
-      <div className="messages-content">
-
-        <div className="search mt-4">
-          <input
-            type="text"
-            className="search__input"
-            placeholder="Search"
-          />
-        </div>
-
-        <div className="mt-3 d-flex align-items-center justify-content-around messages-header">
-
-          <div
-            className="radio-input"
-            style={{
-              "--translate": selected === "all" ? "0%" : "100%",
-            }}
-          >
-            <label onClick={() => setSelected("all")}>
-              <span className={selected === "all" ? "active" : ""}>
-                All
-              </span>
-            </label>
-
-            <label onClick={() => setSelected("unread")}>
-              <span className={selected === "unread" ? "active" : ""}>
-                Unread
-              </span>
-            </label>
-
-            <div className="selection"></div>
+      <div className="messages-content d-flex flex-column justfify-content-start">
+        <div className="p-4 border-bottom">
+          <h3 className="fw-bold mb-1">Chats</h3>
+          <small className="text-muted">Select a conversation to get started</small>
+          <div className="pt-2">
+            <input className="search__input" placeholder="Search Chats..." />
           </div>
 
-          <button className="new-button">
-            New Message
-          </button>
 
+
+          <div className="mt-3 d-flex align-items-center justify-content-between ">
+            <div
+              className="radio-input"
+              style={{
+                "--translate": selected === "all" ? "0%" : "100%",
+              }}
+            >
+              <label onClick={() => setSelected("all")}>
+                <span className={selected === "all" ? "active" : ""}>
+                  All
+                </span>
+              </label>
+
+              <label onClick={() => setSelected("unread")}>
+                <span className={selected === "unread" ? "active" : ""}>
+                  Unread
+                </span>
+              </label>
+
+              <div className="selection"></div>
+            </div>
+
+            <button className="new-button">
+              New Message
+            </button>
+
+          </div>
         </div>
+
+
 
         <div className="messages-list mt-3">
           {comments.map((message) => (
             <div
               key={message.id}
-              className={`messages p-2 d-flex gap-3 ${selectedChat?.id === message.id ? "selected-chat" : ""}`}
+              className={`messages p-2 d-flex gap-3`}
               onClick={() => setSelectedChat(message)}
             >
               <div className="profilePictures">
                 <img
                   src={Nopfp}
                   alt="Profile"
-                  className="profile-image rounded-5"
-                  height={45}
+                  className="profile-image"
                 />
               </div>
 
               <div className="message-content">
                 <div className="message-header">
-                  <h5 className="message-sender">
+                  <h6 className="message-sender mb-0">
                     {message.user.fullName}
-                  </h5>
+                  </h6>
 
-                  <span className={`message-time ${selectedChat?.id === message.id ? "selected-chat" : ""}`}>
+                  <span className={`message-time`}>
                     {time}
                   </span>
                 </div>
 
-                <p className={`message-text ${selectedChat?.id === message.id ? "selected-chat" : ""}`}>
+                <p className={`message-text`}>
                   {message.body}
                 </p>
               </div>

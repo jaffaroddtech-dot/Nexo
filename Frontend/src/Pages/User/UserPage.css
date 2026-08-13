@@ -4,14 +4,17 @@
 }
 
 .profile-card {
-  background: #fff;
+  background: radial-gradient(circle at 30% 20%, #1a1c3e 0%, #0f1024 60%, #0b0c1e 100%);
   padding: 2rem;
   border-radius: 12px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  /* height: 80vh; */
+  /* width: 80%; */
+
 }
 
 .profile-imagee {
-  border: 3px solid #6C5DFB; /* purple border */
+  border: 3px solid #6C5DFB;
+  /* purple border */
 }
 
 .user-name {
@@ -19,6 +22,205 @@
   color: #333;
 }
 
-.user-email, .user-phone {
+.user-email,
+.user-phone {
   color: #666;
+}
+
+
+
+.userCard {
+  background: #181a3a;
+  color: #fff;
+  padding: 40px;
+  border-radius: 16px;
+  width: 400px;
+
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 25px;
+  color: #cfcfff;
+}
+
+.infoGroup {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+}
+
+.infoGroup label {
+  font-size: 14px;
+  color: #b3b3d1;
+  margin-bottom: 6px;
+}
+
+.infoGroup input {
+  background: #0f1024;
+  border: 1px solid #7758f9;
+  border-radius: 8px;
+  padding: 10px;
+  color: #fff;
+  font-size: 15px;
+}
+
+.toggleGroup {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.toggle {
+  width: 50px;
+  height: 26px;
+  border-radius: 13px;
+  background: #444;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.toggle.on {
+  background: #7758f9;
+}
+
+.circle {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 20px;
+  height: 20px;
+  background: #fff;
+  border-radius: 50%;
+  transition: left 0.3s ease;
+}
+
+.toggle.on .circle {
+  left: 27px;
+}
+
+.saveBtn {
+  width: 100%;
+  background: #7758f9;
+  color: #fff;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background 0.3s ease;
+}
+
+.saveBtn:hover {
+  background: #6747d8;
+}
+
+
+
+.settingsCard {
+  background: #181a3a;
+  color: #fff;
+  padding: 40px;
+  border-radius: 16px;
+  width: 420px;
+
+}
+
+.title {
+  font-size: 22px;
+  font-weight: 600;
+  margin-bottom: 25px;
+  color: #cfcfff;
+}
+
+.section {
+  margin-bottom: 25px;
+}
+
+.sectionTitle {
+  font-size: 18px;
+  font-weight: 500;
+  margin-bottom: 12px;
+  color: #b3b3d1;
+}
+
+.actionBtn {
+  display: block;
+  width: 100%;
+  background: #0f1024;
+  border: 1px solid #7758f9;
+  border-radius: 8px;
+  padding: 10px;
+  color: #fff;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.actionBtn:hover {
+  background: #2a2c4f;
+}
+
+.hint {
+  font-size: 12px;
+  color: #8D8FA6;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.statusInput {
+  width: 100%;
+  background: #0f1024;
+  border: 1px solid #7758f9;
+  border-radius: 8px;
+  padding: 10px;
+  color: #fff;
+  font-size: 15px;
+}
+
+.saveBtn {
+  width: 100%;
+  background: #7758f9;
+  color: #fff;
+  border: none;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: background 0.3s ease;
+}
+
+.saveBtn:hover {
+  background: #6747d8;
+}
+
+.section-status {
+
+
+  background: #181a3a;
+  color: #fff;
+  padding: 40px;
+  border-radius: 16px;
+  width: 420px;
+
+}
+
+
+.container-setting {
+  display: flex;
+  gap: 20px;
+  flex-direction: column;
+}
+
+
+.profilepic {
+  border-radius: 50%;
+}
+
+.phone {
+  cursor: not-allowed;
 }

@@ -83,6 +83,20 @@ const Signup = () => {
                                 <p className="text-danger error">{"*" + errors.phoneNumber.message + "*"}</p>
                             )}
                         </div>
+                        <div className="mb-3">
+                            <label className="nexo-label form-label">Country</label>
+                            <input
+                                type="text"
+                                className="nexo-input"
+                                placeholder="Pakistan"
+                                {...register("country", {
+                                    required: "Country is required"
+                                })}
+                            />
+                            {errors.country && (
+                                <p className="text-danger error">{"*" + errors.country.message + "*"}</p>
+                            )}
+                        </div>
 
                         {/* Password */}
                         <div className="mb-3 position-relative">

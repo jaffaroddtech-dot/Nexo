@@ -37,6 +37,16 @@ const requests = {
     }
   },
 
+  put: async (route, data) => {
+    try {
+      const res = await axios.put(route, data);
+      return res.data;
+    } catch (err) {
+      // ✅ Always return backend JSON if available
+      return err.response?.data ?? { status: false, message: "Something went wrong!" };
+    }
+  },
+
   patch: async (route, data) => {
     try {
       const res = await axios.patch(route, data);

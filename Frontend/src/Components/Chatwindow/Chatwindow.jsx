@@ -17,7 +17,7 @@ const ChatWindow = ({ chat }) => {
 
 
                 <div className="chat-logo"></div>
-                <h2>Select a conversation</h2>
+                <h2>Choose a conversation to continue</h2>
 
             </div>
         );
