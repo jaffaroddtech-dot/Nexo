@@ -29,6 +29,7 @@ const userSchema = new mongoose.Schema(
     }],
     bio: { type: String, default: "Hey there! I'm using Nexo" },
     country: { type: String, default: "" },
+    profilePic: { type: String, default: ""}
   },
   { timestamps: true }
 );

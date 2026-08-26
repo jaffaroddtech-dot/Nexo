@@ -1,4 +1,5 @@
 const User = require("../models/User");
+const cloudinary = require("cloudinary").v2;
 
 exports.createUser = async (req, res) => {
   try {
@@ -84,6 +85,7 @@ exports.updateUser = async (req, res) => {
         phoneNumber: user.phoneNumber,
         bio: user.bio,
         country: user.country,
+        profilePic: user.profilePic
       },
       status: true,
     });
@@ -93,6 +95,35 @@ exports.updateUser = async (req, res) => {
       error: error.message,
       status: false,
     });
+  }
+};
+
+
+
+exports.updateProfile = async (req, res) => {
+  console.log(req)
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ status: false, message: "User not found" });
+    }
+
+    if (user.profilePic) {
+      const publicId = user.profilePic.split("/").pop().split(".")[0]; 
+      await cloudinary.uploader.destroy(`home/${publicId}`);
+    }
+
+    user.profilePic = req.file.path; // 👈 Cloudinary URL
+    await user.save();
+
+    res.json({
+      status: true,
+      message: "Profile picture updated successfully",
+      url: req.file.path,
+    });
+  } catch (err) {
+    res.status(500).json({ status: false, message: "Upload failed", error: err.message });
   }
 };
 

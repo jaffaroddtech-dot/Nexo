@@ -3,6 +3,9 @@ const express = require("express");
 const cors = require("cors");
 const connectDB = require("./config/db");
 const routes = require("./routes/index");
+const { globalLimiter } = require("./middleware/limiterMiddleware");
+
+// Apply global limiter to all routes
 
 const app = express();
 
@@ -10,9 +13,13 @@ const app = express();
 connectDB();
 
 // Core middleware
-app.use(cors());
+app.use(cors({
+  origin: "http://localhost:5173", // 👈 frontend ka origin
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(globalLimiter);
 
 // Health check
 app.get("/", (req, res) => {
