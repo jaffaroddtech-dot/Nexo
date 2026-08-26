@@ -26,15 +26,13 @@ export const getProfile = async () => {
   }
 };
 
-// Logout
-// src/features/authThunks.js
-
+// LOGOUT USER
 export const logoutUser = () => async (dispatch) => {
   try {
     await requests.post("/auth/logout"); 
     dispatch(logoutAction());            
   } catch (error) {
     console.error("Logout failed:", error);
-    dispatch(logoutAction()); // fallback: at least clear frontend
+    dispatch(logoutAction());
   }
 };

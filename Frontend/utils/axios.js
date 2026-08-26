@@ -1,8 +1,9 @@
 import Axios from "axios";
-import config from "./config"; // config.BASE_URL = "http://localhost:5000"
+import config from "./config";
 
 const axios = Axios.create({
   baseURL: config.BASE_URL + "/api",
+  withCredentials: true,
 });
 
 // Attach token automatically
@@ -15,6 +16,30 @@ axios.interceptors.request.use(
     return configuration;
   },
   (error) => Promise.reject(error)
+);
+
+axios.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      try {
+        const res = await axios.post("/auth/refresh");
+        if (res.data.status && res.data.token) {
+          localStorage.setItem("@token", res.data.token);
+          axios.defaults.headers.common["Authorization"] = `Bearer ${res.data.token}`;
+          return axios(originalRequest);
+        }
+      } catch (refreshError) {
+        localStorage.removeItem("@token");
+        window.location.href = "/login";
+      }
+    }
+
+    return Promise.reject(error);
+  }
 );
 
 const requests = {
@@ -32,7 +57,6 @@ const requests = {
       const res = await axios.post(route, data);
       return res.data;
     } catch (err) {
-      // ✅ Always return backend JSON if available
       return err.response?.data ?? { status: false, message: "Something went wrong!" };
     }
   },
@@ -42,7 +66,6 @@ const requests = {
       const res = await axios.put(route, data);
       return res.data;
     } catch (err) {
-      // ✅ Always return backend JSON if available
       return err.response?.data ?? { status: false, message: "Something went wrong!" };
     }
   },

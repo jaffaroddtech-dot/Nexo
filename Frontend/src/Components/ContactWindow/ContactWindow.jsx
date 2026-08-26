@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 
 const ContactWindow = ({ contact }) => {
-    console.log(contact)
+    console.log("reponse",contact)
     if (!contact) {
         return (
             <div className="empty-contact d-flex flex-column justify-content-center">
@@ -27,13 +27,13 @@ const ContactWindow = ({ contact }) => {
 
                 {/* Profile Image */}
                 <div className="profile-avatar">
-                    EW
+                    <img src={contact.contactUser.profilePic} className="profilepic"/>
                 </div>
 
                 {/* Header */}
                 <div className="contact-header">
-                    <h2>{contact.user.fullName}</h2>
-                    <span>Online</span>
+                    <h2>{contact.savedName}</h2>
+                    <span>{contact.contactUser.online? "Online":"Offline"}</span>
                 </div>
 
                 <div className="divider"></div>
@@ -46,13 +46,8 @@ const ContactWindow = ({ contact }) => {
                         <div className="contact-info-2">
 
                             <div className="info-row">
-                                <Mail size={18} />
-                                <span>{`${contact.user.username}@gmail.com`}</span>
-                            </div>
-
-                            <div className="info-row">
                                 <Phone size={18} />
-                                <span>+1 123 456 7890</span>
+                                <span>{contact.contactUser.phoneNumber}</span>
                             </div>
 
                         </div>
@@ -74,12 +69,12 @@ const ContactWindow = ({ contact }) => {
 
                         <div className="detail-row">
                             <UserRound size={18} />
-                            <span>{contact.body}</span>
+                            <span>{contact.contactUser.bio}</span>
                         </div>
 
                         <div className="detail-row">
                             <MapPin size={18} />
-                            <span>Dormont, PA</span>
+                            <span>{contact.contactUser.country}</span>
                         </div>
 
                     </div>

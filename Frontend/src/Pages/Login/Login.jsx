@@ -7,7 +7,7 @@ import { faApple, faGoogle } from '@fortawesome/free-brands-svg-icons';
 import { loginUser } from "../../../Apis/auth";
 import { useDispatch } from "react-redux";
 import { getProfile } from "../../../Apis/auth";
-import { setCredentials, setUser } from "../../features/authSlice";
+import { setCredentials } from "../../features/authSlice";
 import { toast } from "react-toastify";
 import "./Login.css";
 
@@ -23,25 +23,35 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   const onSubmit = async (data) => {
+  try {
     const response = await loginUser(data);
-    console.log(response);
-    if (response.status) {
-      // JWT save
-      dispatch(setCredentials({ token: response.token }));
-      localStorage.setItem("token", response.token);
-      toast.success(response.message);
+    console.log("Login response:", response);
 
+    // Axios HTTP code + backend status
+    if (response.status) {
+      toast.success(response.message);
+      
+      localStorage.setItem("@token", response.token);
+
+      // Get user profile
       const userRes = await getProfile();
       if (userRes.status) {
-        dispatch(setUser(userRes.data));
-        localStorage.setItem("user",JSON.stringify(userRes.data))
+        dispatch(setCredentials({ token: response.token, user: userRes.data }));
+        navigate("/"); // ✅ redirect only after Redux update
+      } else {
+        toast.error(userRes.message);
       }
-
-      navigate("/"); // redirect to home
     } else {
       toast.error(response.message);
     }
-  };
+  } catch (err) {
+    console.error("Login failed:", err);
+    toast.error("Login request failed");
+  }
+};
+
+
+
 
   return (
     <div className="nexo-page d-flex flex-column">

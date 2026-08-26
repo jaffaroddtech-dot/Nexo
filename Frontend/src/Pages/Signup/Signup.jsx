@@ -3,9 +3,16 @@ import { useForm } from "react-hook-form";
 import { registerUser } from "../../../Apis/auth";
 import logo from "../../assets/logo.png";
 import { toast } from "react-toastify"
+import {getProfile} from "../../../Apis/auth";
+import { useDispatch } from "react-redux";
+import { setCredentials } from "../../features/authSlice";
+import { useNavigate } from "react-router-dom";
 import "./Signup.css";
 
 const Signup = () => {
+    const dispatch = useDispatch();
+    const navigate = useNavigate();
+    
     const {
         register,
         handleSubmit,
@@ -16,13 +23,25 @@ const Signup = () => {
     const [showPassword, setShowPassword] = useState(false);
 
     const onSubmit = async (data) => {
-        const response = await registerUser(data);
-        console.log("response from api", response);
-        if (response.status) {
-            localStorage.setItem("@token", response.token);
-            toast.success("Signup successful! 🎉");
-        } else {
-            toast.error(response.message);
+        try {
+            const response = await registerUser(data);
+            if (response.status) {
+                toast.success("Signup successful! 🎉");
+
+                // ✅ Save token immediately
+                localStorage.setItem("@token", response.token);
+
+                // ✅ Get user profile
+                const userRes = await getProfile();
+                if (userRes.status) {
+                    dispatch(setCredentials({ token: response.token, user: userRes.data }));
+                    navigate("/"); // direct dashboard
+                }
+            } else {
+                toast.error(response.message);
+            }
+        } catch (err) {
+            toast.error("Signup failed");
         }
     };
 
