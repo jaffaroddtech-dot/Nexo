@@ -1,6 +1,6 @@
 import React from "react";
 import "./ContactWindow.css";
-import { Phone, MessageCircle } from "lucide-react";
+import { Phone, MessageCircle, Trash2, Send} from "lucide-react";
 import nopfp from "../../Assets/nopfp.jpg";
 
 import {
@@ -8,9 +8,11 @@ import {
     UserRound,
     MapPin,
 } from "lucide-react";
+import { deleteContact } from "../../../Apis/contact";
+import { toast } from "react-toastify";
 
 const ContactWindow = ({ contact }) => {
-    console.log("reponse",contact)
+    console.log("reponse", contact)
     if (!contact) {
         return (
             <div className="empty-contact d-flex flex-column justify-content-center">
@@ -20,6 +22,20 @@ const ContactWindow = ({ contact }) => {
         );
     }
 
+    const handleDelete = async() => {
+        try {
+            const res = await deleteContact(contact._id);
+            if (res.status){
+                toast.success(res.message);
+            }else{
+                toast.error(res.message);
+            }
+        } catch (error) {
+            toast.error("Something went wrong");
+        }
+    };
+
+
     return (
         <div className="contact-page">
 
@@ -27,13 +43,13 @@ const ContactWindow = ({ contact }) => {
 
                 {/* Profile Image */}
                 <div className="profile-avatar">
-                    <img src={contact.contactUser.profilePic} className="profilepic"/>
+                    <img src={contact.contactUser.profilePic} className="profilepic" />
                 </div>
 
                 {/* Header */}
                 <div className="contact-header">
                     <h2>{contact.savedName}</h2>
-                    <span>{contact.contactUser.online? "Online":"Offline"}</span>
+                    <span>{contact.contactUser.online ? "Online" : "Offline"}</span>
                 </div>
 
                 <div className="divider"></div>
@@ -80,9 +96,15 @@ const ContactWindow = ({ contact }) => {
                     </div>
 
                     {/* Button */}
-                    <button className="sendd-btn">
-                        Send Message
-                    </button>
+                    <div className="d-flex align-items-center justify-content-between">
+
+                        <button className="delete-btn" onClick={handleDelete}>
+                            <Trash2/>
+                        </button>
+                        <button className="sendd-btn">
+                            <Send/>
+                        </button>
+                    </div>
 
                 </div>
 

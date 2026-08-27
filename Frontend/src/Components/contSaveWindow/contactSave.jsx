@@ -2,8 +2,9 @@ import React from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { addContact } from "../../../Apis/contact"
-import {X} from "lucide-react"
-
+import { X } from "lucide-react"
+import { useDispatch } from "react-redux";
+import { addContactState } from "../../features/contactSlice";
 
 
 import "./contactSave.css";
@@ -14,13 +15,13 @@ const ContactSave = ({ onClose, onSuccess }) => {
     handleSubmit,
     formState: { errors }
   } = useForm();
-
+  const dispatch = useDispatch();
   const onSubmit = async (data) => {
     try {
       const res = await addContact(data);
       if (res.status) {
         toast.success(res.message);
-        onSuccess(res); // update parent contacts list
+        dispatch(addContactState(res));
         onClose(); // close panel
       } else {
         toast.error(res.message);
@@ -31,7 +32,7 @@ const ContactSave = ({ onClose, onSuccess }) => {
   };
 
   return (
-   <div className="contact-modal">
+    <div className="contact-modal">
       <div className="contact-card">
         {/* Close X */}
         <button className="close-btn" onClick={onClose}><X /></button>

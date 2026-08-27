@@ -23,14 +23,19 @@ axios.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    const isTokenExpired =
+      error.response?.status === 401 ||
+      error.response?.data?.error === "jwt expired"; // 👈 sahi check
+
+    if (isTokenExpired && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
         const res = await axios.post("/auth/refresh");
-        if (res.data.status && res.data.token) {
+        console.log(res.data  )
+        if (res.data.status && res.data.token) {   // 👈 res.data use karo
           localStorage.setItem("@token", res.data.token);
           axios.defaults.headers.common["Authorization"] = `Bearer ${res.data.token}`;
-          return axios(originalRequest);
+          return axios(originalRequest); // retry original request
         }
       } catch (refreshError) {
         localStorage.removeItem("@token");
@@ -41,6 +46,7 @@ axios.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
 
 const requests = {
   get: async (route, params = {}, controller = new AbortController()) => {

@@ -6,6 +6,10 @@
     return res;
   };
 
+  export const deleteContact = async (id) =>{
+    const res = await requests.delete(`/contacts/deleteContact/${id}`);
+    return res
+  };
 
   export const getContacts = async () => {
   const res = await requests.get("/contacts/getContacts");
