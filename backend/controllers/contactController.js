@@ -36,10 +36,48 @@ exports.addContact = async (req, res) => {
   }
 };
 
+// --- DELETE CONTACT ---
+exports.deleteContact = async (req, res) => {
+  try {
+    const contactId = req.params.id;
+
+    // Find the contact
+    const contact = await Contact.findOne({
+      _id: contactId,
+      owner: req.user._id
+    });
+
+    if (!contact) {
+      return res.status(404).json({
+        message: "Contact not found",
+        status: false
+      });
+    }
+
+    // Remove contact reference from user's contacts array
+    await User.findByIdAndUpdate(req.user._id, {
+      $pull: { contacts: contact._id }
+    });
+
+    // Delete the contact document itself
+    await Contact.findByIdAndDelete(contact._id);
+
+    return res.status(200).json({
+      message: "Contact deleted successfully",
+      status: true
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Something went wrong!",
+      error: error.message,
+      status: false
+    });
+  }
+};
+
 
 // Get Contacts
 exports.getContacts = async (req, res) => {
-  console.log(req)
   try {
     const user = await User.findById(req.user._id).populate({
       path: "contacts",

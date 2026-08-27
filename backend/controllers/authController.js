@@ -158,3 +158,36 @@ exports.logout = async (req, res) => {
   }
 };
 
+// --- REFRESH TOKEN ---
+// @route POST /api/auth/refresh
+exports.refreshToken = async (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+  if (!refreshToken) {
+    return res.status(401).json({ status: false, message: "No refresh token" });
+  }
+
+  try {
+    // Verify refresh token
+    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+
+    const user = await User.findById(decoded.id);
+    if (!user) {
+      return res.status(404).json({ status: false, message: "User not found" });
+    }
+
+    // Generate new access token
+    const newAccessToken = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "15m" }
+    );
+
+    return res.json({
+      status: true,
+      token: newAccessToken,
+      message: "Access token refreshed successfully"
+    });
+  } catch (err) {
+    return res.status(403).json({ status: false, message: "Invalid refresh token" });
+  }
+};

@@ -10,7 +10,7 @@ exports.protect = async (req, res, next) => {
     }
 
     if (!token) {
-      return res.status(201).json({
+      return res.status(401).json({
         message: "Not authorized, no token provided",
         status: false,
       });
@@ -20,7 +20,7 @@ exports.protect = async (req, res, next) => {
     req.user = await User.findById(decoded.id);
 
     if (!req.user) {
-      return res.status(201).json({
+      return res.status(401).json({
         message: "Not authorized, user not found",
         status: false,
       });
@@ -28,7 +28,7 @@ exports.protect = async (req, res, next) => {
 
     next();
   } catch (error) {
-    return res.status(201).json({
+    return res.status(401).json({
       message: "Not authorized, token failed",
       error: error.message,
       status: false,

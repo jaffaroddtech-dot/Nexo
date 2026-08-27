@@ -101,7 +101,6 @@ exports.updateUser = async (req, res) => {
 
 
 exports.updateProfile = async (req, res) => {
-  console.log(req)
   try {
     const user = await User.findById(req.params.id);
 
