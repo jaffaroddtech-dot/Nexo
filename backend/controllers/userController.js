@@ -82,10 +82,11 @@ exports.updateUser = async (req, res) => {
       data: {
         _id: user._id,
         name: user.name,
-        phoneNumber: user.phoneNumber,
+        phoneNumber: user.getMaskedPhoneNumber(),
         bio: user.bio,
         country: user.country,
-        profilePic: user.profilePic
+        profilePic: user.profilePic,
+        email: user.email,
       },
       status: true,
     });

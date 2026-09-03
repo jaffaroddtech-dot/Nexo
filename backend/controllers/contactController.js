@@ -28,7 +28,7 @@ exports.addContact = async (req, res) => {
     await User.findByIdAndUpdate(req.user._id, { $push: { contacts: newContact._id } });
 
     const populatedContact = await Contact.findById(newContact._id)
-      .populate("contactUser", "name phoneNumber online profilePic");
+      .populate("contactUser", "name phoneNumber online profilePic bio country email");
 
     return res.status(201).json({ message: "Contact saved successfully", data: populatedContact, status: true });
   } catch (error) {
@@ -81,7 +81,7 @@ exports.getContacts = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).populate({
       path: "contacts",
-      populate: { path: "contactUser", select: "name phoneNumber online bio country profilePic " }
+      populate: { path: "contactUser", select: "name phoneNumber online bio country profilePic email" }
     });
 
     return res.status(200).json({ message: "Contacts fetched successfully", data: user.contacts, status: true });
@@ -89,3 +89,28 @@ exports.getContacts = async (req, res) => {
     return res.status(500).json({ message: "Something went wrong!", error: error.message, status: false });
   }
 };
+
+
+// ---Update Contact---
+// Update Contact Saved Name
+exports.updateContact = async (req, res) => {
+  try {
+    const { id } = req.params; // contact id
+    const { savedName } = req.body;
+
+    const contact = await Contact.findOneAndUpdate(
+      { _id: id, owner: req.user._id },
+      { savedName },
+      { new: true }
+    ).populate("contactUser", "name phoneNumber online bio country profilePic email");
+
+    if (!contact) {
+      return res.status(404).json({ message: "Contact not found", status: false });
+    }
+
+    return res.status(200).json({ message: "Contact updated successfully", data: contact, status: true });
+  } catch (error) {
+    return res.status(500).json({ message: "Something went wrong!", error: error.message, status: false });
+  }
+};
+

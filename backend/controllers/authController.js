@@ -1,5 +1,7 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const CryptoJS = require("crypto-js");
+const secretKey = process.env.PHONE_SECRET_KEY;
 
 
 // Generate Access Token (short expiry)
@@ -15,8 +17,18 @@ const generateRefreshToken = (user) => {
 // --- REGISTER USER ---
 exports.register = async (req, res) => {
   try {
-    const { name, phoneNumber, password, country, bio } = req.body;
+    const { name, email, phoneNumber, password, country, bio } = req.body;
 
+    // Check if email exists
+    const existingEmail = await User.findOne({ email });
+    if (existingEmail) {
+      return res.status(409).json({
+        message: "An account with this email already exists",
+        status: false,
+      });
+    }
+
+    // Check if phone exists (only if not hashed)
     const existingPhone = await User.findOne({ phoneNumber });
     if (existingPhone) {
       return res.status(409).json({
@@ -25,8 +37,10 @@ exports.register = async (req, res) => {
       });
     }
 
+    // Create new user
     const newUser = await User.create({
       name,
+      email,
       password,
       phoneNumber,
       online: false,
@@ -37,7 +51,6 @@ exports.register = async (req, res) => {
     const accessToken = generateAccessToken(newUser);
     const refreshToken = generateRefreshToken(newUser);
 
-    // ✅ Save refresh token in httpOnly cookie
     res.cookie("refreshToken", refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -47,13 +60,6 @@ exports.register = async (req, res) => {
 
     return res.status(201).json({
       message: "Account created successfully",
-      data: {
-        _id: newUser._id,
-        name: newUser.name,
-        phoneNumber: newUser.phoneNumber,
-        country: newUser.country,
-        bio: newUser.bio,
-      },
       token: accessToken,
       status: true,
     });
@@ -68,18 +74,19 @@ exports.register = async (req, res) => {
 };
 
 
+
 //---LOGIN---
 
 exports.login = async (req, res) => {
-  const { phoneNumber, password } = req.body;
+  const { email, password } = req.body;
   console.log("Login request body:", req.body);
   try {
-    // ✅ Password field explicitly select
-    const user = await User.findOne({ phoneNumber }).select("+password");
+
+    const user = await User.findOne({ email }).select("+password");
     if (!user || !(await user.matchPassword(password))) {
-      return res.status(201).json({
+      return res.status(401).json({
         status: false,
-        message: "Invalid Phone number or password",
+        message: "Invalid email or password",
       });
     }
 
@@ -99,7 +106,7 @@ exports.login = async (req, res) => {
       status: true,
       token: accessToken,
       message: "Login successful",
-      data: { id: user._id, name: user.name, phoneNumber: user.phoneNumber }
+      // data: { id: user._id, name: user.name, phoneNumber: user.phoneNumber }
     });
   } catch (err) {
     res.status(500).json({ status: false, message: "Server error" });
@@ -116,7 +123,7 @@ exports.getMe = async (req, res) => {
     }
     return res.status(200).json({
       message: "Current user fetched successfully",
-      data: user,
+      data: { ...user.toObject(), phoneNumber: user.getMaskedPhoneNumber() },
       status: true,
     });
   } catch (error) {
@@ -191,3 +198,24 @@ exports.refreshToken = async (req, res) => {
     return res.status(403).json({ status: false, message: "Invalid refresh token" });
   }
 };
+
+
+// --- RESET PASSWORD ---
+// controllers/authController.js
+// exports.resetPassword = async (req, res) => {
+//   try {
+//     const { phoneNumber, newPassword } = req.body;
+//     const user = await User.findOne({ phoneNumber });
+//     if (!user) return res.status(404).json({ message: "User not found" });
+
+//     // Sirf plain password assign karo
+//     user.password = newPassword;
+
+//     // Pre-save hook khud hash karega
+//     await user.save();
+
+//     res.json({ message: "Password reset successful" });
+//   } catch (err) {
+//     res.status(500).json({ message: "Server error" });
+//   }
+// };
