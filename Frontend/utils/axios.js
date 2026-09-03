@@ -23,16 +23,20 @@ axios.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Agar login ya refresh route hai → retry mat karo
+    if (originalRequest.url.includes("/auth/login") || originalRequest.url.includes("/auth/refresh")) {
+      return Promise.reject(error);
+    }
+
     const isTokenExpired =
       error.response?.status === 401 ||
-      error.response?.data?.error === "jwt expired"; // 👈 sahi check
+      error.response?.data?.error === "jwt expired";
 
     if (isTokenExpired && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
         const res = await axios.post("/auth/refresh");
-        console.log(res.data  )
-        if (res.data.status && res.data.token) {   // 👈 res.data use karo
+        if (res.data.status && res.data.token) {
           localStorage.setItem("@token", res.data.token);
           axios.defaults.headers.common["Authorization"] = `Bearer ${res.data.token}`;
           return axios(originalRequest); // retry original request
@@ -46,6 +50,7 @@ axios.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
 
 
 const requests = {

@@ -9,7 +9,7 @@ import { addContactState } from "../../features/contactSlice";
 
 import "./contactSave.css";
 
-const ContactSave = ({ onClose, onSuccess }) => {
+const ContactSave = ({ onClose }) => {
   const {
     register,
     handleSubmit,
@@ -19,9 +19,10 @@ const ContactSave = ({ onClose, onSuccess }) => {
   const onSubmit = async (data) => {
     try {
       const res = await addContact(data);
+      console.log("new",res.data)
       if (res.status) {
         toast.success(res.message);
-        dispatch(addContactState(res));
+        dispatch(addContactState(res.data));
         onClose(); // close panel
       } else {
         toast.error(res.message);

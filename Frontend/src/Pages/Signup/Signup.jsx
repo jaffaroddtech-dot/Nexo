@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { registerUser } from "../../../Apis/auth";
 import logo from "../../assets/logo.png";
 import { toast } from "react-toastify"
-import {getProfile} from "../../../Apis/auth";
+import { getProfile } from "../../../Apis/auth";
 import { useDispatch } from "react-redux";
 import { setCredentials } from "../../features/authSlice";
 import { useNavigate } from "react-router-dom";
@@ -12,7 +12,7 @@ import "./Signup.css";
 const Signup = () => {
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    
+
     const {
         register,
         handleSubmit,
@@ -26,13 +26,10 @@ const Signup = () => {
         try {
             const response = await registerUser(data);
             if (response.status) {
-                toast.success("Signup successful! 🎉");
-
-                // ✅ Save token immediately
+                toast.success(response.message);
                 localStorage.setItem("@token", response.token);
-
-                // ✅ Get user profile
                 const userRes = await getProfile();
+                console.log(userRes)
                 if (userRes.status) {
                     dispatch(setCredentials({ token: response.token, user: userRes.data }));
                     navigate("/"); // direct dashboard
@@ -84,6 +81,27 @@ const Signup = () => {
                             />
                             {errors.name && <p className="text-danger error">{"*" + errors.name.message + "*"}</p>}
                         </div>
+                        {/* EMAIL */}
+                        <div className="mb-3">
+                            <label className="nexo-label form-label">Email</label>
+                            <input
+                                type="email"
+                                className="nexo-input"
+                                placeholder="jon@example.com"
+                                {...register("email", {
+                                    required: "Email is required",
+                                    pattern: {
+                                        value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+                                        message: "Enter a valid email address"
+                                    }
+                                })}
+                            />
+                            {errors.email && (
+                                <p className="text-danger error">{"*" + errors.email.message + "*"}</p>
+                            )}
+                        </div>
+
+                        {/* PHONE NUMBER */}
                         <div className="mb-3">
                             <label className="nexo-label form-label">Phone Number</label>
                             <input

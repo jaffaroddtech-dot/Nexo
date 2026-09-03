@@ -23,32 +23,33 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
 
   const onSubmit = async (data) => {
-  try {
-    const response = await loginUser(data);
-    console.log("Login response:", response);
+    try {
+      const response = await loginUser(data);
+      console.log("Login response:", response);
 
-    // Axios HTTP code + backend status
-    if (response.status) {
-      toast.success(response.message);
-      
-      localStorage.setItem("@token", response.token);
+      // Axios HTTP code + backend status
+      if (response.status) {
+        toast.success(response.message);
 
-      // Get user profile
-      const userRes = await getProfile();
-      if (userRes.status) {
-        dispatch(setCredentials({ token: response.token, user: userRes.data }));
-        navigate("/"); // ✅ redirect only after Redux update
+        localStorage.setItem("@token", response.token);
+
+        // Get user profile
+        const userRes = await getProfile();
+        console.log(userRes);
+        if (userRes.status) {
+          dispatch(setCredentials({ token: response.token, user: userRes.data }));
+          navigate("/");
+        } else {
+          toast.error(userRes.message);
+        }
       } else {
-        toast.error(userRes.message);
+        toast.error(response.message);
       }
-    } else {
-      toast.error(response.message);
+    } catch (err) {
+      console.error("Login failed:", err);
+      toast.error("Login request failed");
     }
-  } catch (err) {
-    console.error("Login failed:", err);
-    toast.error("Login request failed");
-  }
-};
+  };
 
 
 
@@ -81,21 +82,21 @@ const Login = () => {
           <form onSubmit={handleSubmit(onSubmit)}>
             {/* Email */}
             <div className="mb-3">
-              <label className="nexo-label form-label">Phone Number</label>
+              <label className="nexo-label form-label">Email</label>
               <input
-                type="tel"
+                type="email"
                 className="nexo-input"
-                placeholder="0300 1234567"
-                {...register("phoneNumber", {
-                  required: "Phone number is required",
+                placeholder="jon@example.com"
+                {...register("email", {
+                  required: "Email is required",
                   pattern: {
-                    value: /^[0-9]{11}$/,
-                    message: "Enter a valid phone number"
+                    value: /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
+                    message: "Enter a valid email address"
                   }
                 })}
               />
-              {errors.phoneNumber && (
-                <p className="text-danger error">{"*" + errors.phoneNumber.message + "*"}</p>
+              {errors.email && (
+                <p className="text-danger error">{"*" + errors.email.message + "*"}</p>
               )}
             </div>
 

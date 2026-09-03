@@ -11,7 +11,7 @@ import defaultPic from '../../assets/default.jfif'
 
 const Navbar = () => {
   const { user } = useSelector((state) => state.auth);
-  console.log('redux user',user)
+  console.log("Navbar user:", user); // Debugging line to check user state
 
   return (
     <div className="sidebar">

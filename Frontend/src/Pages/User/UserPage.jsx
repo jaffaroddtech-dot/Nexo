@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -9,15 +9,16 @@ import defaultPic from "../../assets/default.jfif";
 import { updateProfile, uploadProfilePic } from "../../../Apis/user";
 import "./UserPage.css";
 import { Pencil } from 'lucide-react';
-
+// import ResetPassword from "../../Components/resetPassword/resetPassword"; // 👈 import modal
 
 const UserPage = () => {
-    const dispatch = useDispatch();
-    const navigate = useNavigate();
-    const { user, token } = useSelector((state) => state.auth);
-    
-    const {
-        register,
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const { user, token } = useSelector((state) => state.auth);
+  const [openResetModal, setOpenResetModal] = useState(false);
+
+  const {
+    register,
     handleSubmit,
     formState: { errors },
   } = useForm({
@@ -26,6 +27,7 @@ const UserPage = () => {
       phoneNumber: user?.phoneNumber || "",
       country: user?.country || "",
       bio: user?.bio || "",
+      email: user?.email || "",
     },
   });
 
@@ -36,15 +38,16 @@ const UserPage = () => {
       </div>
     );
   }
+
   const handleLogout = () => {
     dispatch(logoutUser());
     navigate("/");
   };
 
   const onSubmit = async (data) => {
-      try {
-          const res = await updateProfile(user?._id, data);
-          if (res.status) {
+    try {
+      const res = await updateProfile(user?._id, data);
+      if (res.status) {
         localStorage.setItem("user", JSON.stringify(res.data));
         dispatch(setCredentials({ token, user: res.data }));
         toast.success(res.message);
@@ -56,17 +59,13 @@ const UserPage = () => {
     }
   };
 
-  // 👇 Direct upload without modal
   const onFileChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
     try {
       const formData = new FormData();
       formData.append("image", file);
-
       const res = await uploadProfilePic(user?._id, formData);
-        console.log(res)
       if (res.status) {
         dispatch(setCredentials({ token, user: { ...user, profilePic: res.url } }));
         toast.success("Profile picture updated!");
@@ -78,6 +77,24 @@ const UserPage = () => {
     }
   };
 
+  // // 👇 Reset Password handler
+  // const handleResetPassword = async ({ otp, newPassword }) => {
+  //   try {
+  //     // Firebase OTP verify karo (agar confirmationResult use kar rahe ho)
+  //     // await confirmationResult.confirm(otp);
+
+  //     // Backend call
+  //     await axios.post("http://localhost:5000/api/auth/reset-password", {
+  //       phoneNumber: user.phoneNumber,
+  //       newPassword
+  //     });
+
+  //     toast.success("Password reset successful!");
+  //     setOpenResetModal(false);
+  //   } catch (err) {
+  //     toast.error("Reset failed");
+  //   }
+  // };
 
   return (
     <div className="user-page d-flex flex-column align-items-center justify-content-center p-4">
@@ -97,6 +114,11 @@ const UserPage = () => {
           </div>
 
           <div className="infoGroup">
+            <label>Email:</label>
+            <input type="email" {...register("email")} disabled className="email" />
+          </div>
+
+          <div className="infoGroup">
             <label>Country:</label>
             <input type="text" {...register("country", { required: "Country is required" })} />
             {errors.country && <p className="error">{errors.country.message}</p>}
@@ -107,11 +129,10 @@ const UserPage = () => {
 
         <div className="container-setting">
           <div className="settingsCard">
-            {/* Profile Pic with Hover Overlay */}
             <div className="profilepic-wrapper">
               <img src={user?.profilePic || defaultPic} alt="profile" className="profilepic" />
               <div className="overlay" onClick={() => document.getElementById("fileInput").click()}>
-              <Pencil/>
+                <Pencil/>
               </div>
               <input type="file" id="fileInput" style={{ display: "none" }} onChange={onFileChange} />
             </div>
@@ -119,7 +140,9 @@ const UserPage = () => {
             <h2 className="title m-0">Account Settings</h2>
             <div className="section">
               <h4 className="sectionTitle">Security</h4>
-              <button type="button" className="actionBtn">Change Password</button>
+              <button type="button" className="actionBtn" onClick={() => setOpenResetModal(true)}>
+                Change Password
+              </button>
               <button type="button" className="actionBtn">Enable 2FA</button>
               <button type="button" className="actionBtn" onClick={handleLogout}>Logout</button>
             </div>
@@ -131,6 +154,14 @@ const UserPage = () => {
           </div>
         </div>
       </form>
+
+      {/* 👇 Reset Password Modal */}
+      {/* <ResetPassword
+        isOpen={openResetModal}
+        onClose={() => setOpenResetModal(false)}
+        // onSubmit={handleResetPassword}
+        phoneNumber={user.phoneNumber}
+      /> */}
     </div>
   );
 };
