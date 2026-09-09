@@ -9,7 +9,9 @@ import defaultPic from "../../assets/default.jfif";
 import { updateProfile, uploadProfilePic } from "../../../Apis/user";
 import "./UserPage.css";
 import { Pencil } from 'lucide-react';
-// import ResetPassword from "../../Components/resetPassword/resetPassword"; // 👈 import modal
+import ResetPassword from "../../Components/resetPassword/resetPassword";
+import {resetPassword} from "../../../Apis/auth";
+
 
 const UserPage = () => {
   const dispatch = useDispatch();
@@ -77,24 +79,20 @@ const UserPage = () => {
     }
   };
 
-  // // 👇 Reset Password handler
-  // const handleResetPassword = async ({ otp, newPassword }) => {
-  //   try {
-  //     // Firebase OTP verify karo (agar confirmationResult use kar rahe ho)
-  //     // await confirmationResult.confirm(otp);
-
-  //     // Backend call
-  //     await axios.post("http://localhost:5000/api/auth/reset-password", {
-  //       phoneNumber: user.phoneNumber,
-  //       newPassword
-  //     });
-
-  //     toast.success("Password reset successful!");
-  //     setOpenResetModal(false);
-  //   } catch (err) {
-  //     toast.error("Reset failed");
-  //   }
-  // };
+  // 👇 Reset Password handler
+  const handleResetPassword = async ({ otp, newPassword }) => {
+    try {
+      const res = await resetPassword({ email: user.email, otp, newPassword });
+      if (!res.status) {
+        toast.error(res.message);
+        return;
+      }
+      toast.success("Password reset successful!");
+      setOpenResetModal(false);
+    } catch (err) {
+      toast.error("Reset failed");
+    }
+  };
 
   return (
     <div className="user-page d-flex flex-column align-items-center justify-content-center p-4">
@@ -156,12 +154,12 @@ const UserPage = () => {
       </form>
 
       {/* 👇 Reset Password Modal */}
-      {/* <ResetPassword
+      <ResetPassword
         isOpen={openResetModal}
         onClose={() => setOpenResetModal(false)}
-        // onSubmit={handleResetPassword}
-        phoneNumber={user.phoneNumber}
-      /> */}
+        onSubmit={handleResetPassword}
+        email={user.email}
+      />
     </div>
   );
 };

@@ -36,3 +36,25 @@ export const logoutUser = () => async (dispatch) => {
     dispatch(logoutAction());
   }
 };
+
+// Reset Password
+export  const resetPassword = async ({email, otp, newPassword}) => {
+  try {
+    const res = await requests.post("/auth/resetPassword", { email, otp, newPassword });  
+    return res;
+  } catch (error) {
+    console.error("Password reset failed:", error);
+    throw error;
+  }
+};
+
+
+export const sendOtp = async({email, purpose}) => {
+  try {
+    const res = await requests.post("/auth/sendOtp", { email, purpose });
+    return res;
+  } catch (error) {
+    console.log("OTP sending failed:", error);
+    throw error;
+  }
+};

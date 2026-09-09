@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import "./ContactWindow.css";
 import {
-  Phone, MessageCircle, Trash2, Send, Edit2, Check, UserRound, Info, MapPin, Mail
+  Phone, MessageCircle, Trash2, Send, Edit2, Check, UserRound, Info, MapPin, Mail, MessageCircleMore
 } from "lucide-react";
 import { removeContactState, updateContactState } from "../../features/contactSlice";
 import { deleteContact, updateContact } from "../../../Apis/contact";
@@ -155,7 +155,7 @@ const ContactWindow = ({ contactId, onDeleted }) => {
               <span>{contact.contactUser.country}</span>
             </div>
             <div className="detail-row">
-              <Info size={18} />
+              <MessageCircleMore size={18} />
               <span>{contact.contactUser.bio}</span>
             </div>
           </div>

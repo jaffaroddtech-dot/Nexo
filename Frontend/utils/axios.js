@@ -18,28 +18,27 @@ axios.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+import { toast } from "react-toastify";
+
 axios.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    // Agar login ya refresh route hai → retry mat karo
     if (originalRequest.url.includes("/auth/login") || originalRequest.url.includes("/auth/refresh")) {
       return Promise.reject(error);
     }
 
-    const isTokenExpired =
-      error.response?.status === 401 ||
-      error.response?.data?.error === "jwt expired";
-
-    if (isTokenExpired && !originalRequest._retry) {
+    if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       try {
-        const res = await axios.post("/auth/refresh");
+        const res = await axios.post("/auth/refresh", {}, { withCredentials: true }); 
+        // cookie automatically attach hogi
+
         if (res.data.status && res.data.token) {
           localStorage.setItem("@token", res.data.token);
           axios.defaults.headers.common["Authorization"] = `Bearer ${res.data.token}`;
-          return axios(originalRequest); // retry original request
+          return axios(originalRequest);
         }
       } catch (refreshError) {
         localStorage.removeItem("@token");
@@ -50,6 +49,8 @@ axios.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
+
 
 
 

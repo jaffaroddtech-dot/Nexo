@@ -18,3 +18,5 @@ export const uploadProfilePic = async (id, formData) => {
     return { status: false, message: "Upload failed", error: err.message };
   }
 };
+
+
