@@ -1,12 +1,14 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
+const Otp = require("../models/Otp");
 const CryptoJS = require("crypto-js");
-const secretKey = process.env.PHONE_SECRET_KEY;
-
+const nodemailer = require("nodemailer");
+const userName = process.env.EMAIL_USER;
+const userPass = process.env.EMAIL_PASS;
 
 // Generate Access Token (short expiry)
 const generateAccessToken = (user) => {
-  return jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "15m" });
+  return jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1s" });
 };
 
 // Generate Refresh Token (long expiry)
@@ -105,6 +107,7 @@ exports.login = async (req, res) => {
     res.json({
       status: true,
       token: accessToken,
+
       message: "Login successful",
       // data: { id: user._id, name: user.name, phoneNumber: user.phoneNumber }
     });
@@ -113,7 +116,7 @@ exports.login = async (req, res) => {
   }
 };
 
- 
+
 // @route  GET /api/auth/me
 exports.getMe = async (req, res) => {
   try {
@@ -202,20 +205,159 @@ exports.refreshToken = async (req, res) => {
 
 // --- RESET PASSWORD ---
 // controllers/authController.js
-// exports.resetPassword = async (req, res) => {
-//   try {
-//     const { phoneNumber, newPassword } = req.body;
-//     const user = await User.findOne({ phoneNumber });
-//     if (!user) return res.status(404).json({ message: "User not found" });
+exports.resetPassword = async (req, res) => {
+  try {
+    const { email, otp, newPassword, } = req.body;
+    console.log("Reset password request body:", req.body);
 
-//     // Sirf plain password assign karo
-//     user.password = newPassword;
+    const otpRecord = await Otp.findOne({ email });
 
-//     // Pre-save hook khud hash karega
-//     await user.save();
+    if (!otpRecord) {
+      return res.status(400).json({
+        status: false,
+        message: "OTP expired",
+      });
+    }
 
-//     res.json({ message: "Password reset successful" });
-//   } catch (err) {
-//     res.status(500).json({ message: "Server error" });
-//   }
-// };
+    if (otpRecord.otp !== otp) {
+      return res.status(400).json({
+        status: false,
+        message: "Invalid OTP",
+      });
+    }
+
+    const user = await User.findOne({ email, }).select("+password");
+
+    if (!user) {
+      return res.status(404).json({
+        status: false,
+        message: "User not found",
+      });
+    }
+
+    user.password = newPassword;
+
+    await user.save();
+
+    // OTP use ho gayi
+    await Otp.deleteOne({ _id: otpRecord._id, });
+
+    return res.json({
+      status: true,
+      message: "Password reset successful",
+    });
+  } catch (err) {
+    console.log(err);
+
+    return res.status(500).json({
+      status: false,
+      message: "Server error",
+    });
+  }
+};
+
+
+// --- SEND OTP ---
+exports.sendOtp = async (req, res) => {
+  const { email, purpose } = req.body;
+  console.log("Send OTP request body:", req.body);
+  try {
+   
+    if (purpose === "resetPassword") {
+      const user = await User.findOne({ email });
+
+      if (!user) {
+        return res.status(404).json({
+          status: false,
+          message: "User not found",
+        });
+      }
+    }
+
+    if (purpose === "signup") {
+      const existingUser = await User.findOne({ email });
+
+      if (existingUser) {
+        return res.status(400).json({
+          status: false,
+          message: "Email already registered",
+        });
+      }
+    }
+
+    const otp = Math.floor(
+      100000 + Math.random() * 900000
+    ).toString();
+
+    await Otp.deleteMany({
+      email,
+      purpose,
+    });
+
+    await Otp.create({
+      email,
+      otp,
+      purpose,
+    });
+
+    const transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: userName,
+        pass: userPass,
+      },
+    });
+
+    await transporter.sendMail({
+      from: `"Nexo" <${userName}>`,
+      to: email,
+      subject: `${purpose === "signup" ? "Verify Your Nexo Account" : "Nexo Password Reset"}`,
+      html: `
+        <div style="
+          font-family: Arial,sans-serif;
+          max-width:600px;
+          margin:auto;
+          padding:20px;
+        ">
+          <h2>${purpose === "signup" ? "Account Verification" : "Password Reset"}</h2>
+
+          <p>Your verification code is:</p>
+
+          <h1 style="
+            letter-spacing:6px;
+            color:#6d28d9;
+          ">
+            ${otp}
+          </h1>
+
+          <p>
+            This code will expire in 5 minutes.
+          </p>
+
+          <p>
+            If you didn't request this, please ignore this email.
+          </p>
+
+          <hr>
+
+          <p>
+            Team Nexo
+          </p>
+        </div>
+      `,
+    });
+
+    return res.status(200).json({
+      status: true,
+      message: "OTP sent successfully",
+    });
+
+  } catch (error) {
+    console.log("Send OTP Error:", error);
+
+    return res.status(500).json({
+      status: false,
+      message: "Server Error",
+    });
+  }
+};
