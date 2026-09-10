@@ -4,6 +4,14 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser")
 const connectDB = require("./config/db");
 const routes = require("./routes/index");
+const http = require("http");
+const { initSocket } = require("./Socket/socket");
+console.log(initSocket, "initSocket");
+
+
+// const { initSocket } = require("./Socket/socket"); 
+
+
 const { globalLimiter } = require("./middleware/limiterMiddleware");
 
 // Apply global limiter to all routes
@@ -43,8 +51,9 @@ app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({ message: "Internal server error", error: err.message, status: false });
 });
-
 const PORT = process.env.PORT || 5000;
+const server = http.createServer(app);
+initSocket(server);
 app.listen(PORT, () => {
   console.log(`NEXO server running on port ${PORT}`);
 });

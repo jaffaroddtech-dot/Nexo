@@ -78,7 +78,7 @@ exports.updateUser = async (req, res) => {
     await user.save();
 
     return res.status(200).json({
-      message: "User updated successfully",
+      message: "Successfully updated your profile",
       data: {
         _id: user._id,
         name: user.name,

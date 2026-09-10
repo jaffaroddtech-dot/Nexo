@@ -8,7 +8,7 @@ const userPass = process.env.EMAIL_PASS;
 
 // Generate Access Token (short expiry)
 const generateAccessToken = (user) => {
-  return jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "1s" });
+  return jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "15m" });
 };
 
 // Generate Refresh Token (long expiry)
@@ -19,9 +19,15 @@ const generateRefreshToken = (user) => {
 // --- REGISTER USER ---
 exports.register = async (req, res) => {
   try {
-    const { name, email, phoneNumber, password, country, bio } = req.body;
+    const { name, email, phoneNumber, password, country, bio, otp } = req.body;
 
-    // Check if email exists
+    if (!otp) {
+      return res.status(400).json({
+        message: "OTP is required",
+        status: false,
+      });
+    }
+
     const existingEmail = await User.findOne({ email });
     if (existingEmail) {
       return res.status(409).json({
@@ -30,12 +36,29 @@ exports.register = async (req, res) => {
       });
     }
 
-    // Check if phone exists (only if not hashed)
+    // Check if phone exists
     const existingPhone = await User.findOne({ phoneNumber });
     if (existingPhone) {
       return res.status(409).json({
         message: "An account with this phone number already exists",
         status: false,
+      });
+    }
+
+    // Verify OTP
+    const otpRecord = await Otp.findOne({ email, purpose: "signup" });
+
+    if (!otpRecord) {
+      return res.status(400).json({
+        status: false,
+        message: "OTP expired",
+      });
+    }
+
+    if (otpRecord.otp !== otp) {
+      return res.status(400).json({
+        status: false,
+        message: "Invalid OTP",
       });
     }
 
@@ -50,6 +73,9 @@ exports.register = async (req, res) => {
       bio,
     });
 
+    // OTP use ho gayi
+    await Otp.deleteOne({ _id: otpRecord._id });
+
     const accessToken = generateAccessToken(newUser);
     const refreshToken = generateRefreshToken(newUser);
 
@@ -59,6 +85,9 @@ exports.register = async (req, res) => {
       sameSite: "strict",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
+
+    const userData = newUser.toObject();
+    delete userData.password;
 
     return res.status(201).json({
       message: "Account created successfully",
@@ -74,6 +103,7 @@ exports.register = async (req, res) => {
     });
   }
 };
+
 
 
 
