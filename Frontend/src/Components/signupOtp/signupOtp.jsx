@@ -1,60 +1,105 @@
-import React from 'react'
 import React, { useState, useRef, useEffect } from "react";
 import { Check, X } from "lucide-react";
+import { maskEmail } from "../../Helpers/Helper";
 import "./signupOtp.css";
-const signupOtp = () => {
+
+const SignupOtp = ({ isOpen, onClose, onConfirm, onSendOtp, submitData }) => {
     const [otp, setOtp] = useState(Array(6).fill(""));
-    const [timer, setTimer] = useState(0); // countdown state
+    const [timer, setTimer] = useState(0);
     const modalRef = useRef(null);
     const inputsRef = useRef([]);
 
     useEffect(() => {
         let interval;
+
         if (timer > 0) {
-            interval = setInterval(() => setTimer((t) => t - 1), 1000);
+            interval = setInterval(() => {
+                setTimer((t) => t - 1);
+            }, 1000);
         }
+
         return () => clearInterval(interval);
     }, [timer]);
 
+    useEffect(() => {
+        if (!isOpen) {
+            setOtp(Array(6).fill(""));
+            setTimer(0);
+        }
+    }, [isOpen]);
+
     if (!isOpen) return null;
-
-
 
     const handleChange = (e, index) => {
         const value = e.target.value.replace(/[^0-9]/g, "");
+
         if (!value) return;
+
         const newOtp = [...otp];
         newOtp[index] = value[0];
+
         setOtp(newOtp);
-        if (index < 5) inputsRef.current[index + 1].focus();
+
+        if (index < 5) {
+            inputsRef.current[index + 1]?.focus();
+        }
     };
 
     const handleKeyDown = (e, index) => {
         if (e.key === "Backspace") {
             const newOtp = [...otp];
+
             if (otp[index]) {
                 newOtp[index] = "";
                 setOtp(newOtp);
             } else if (index > 0) {
                 newOtp[index - 1] = "";
                 setOtp(newOtp);
-                inputsRef.current[index - 1].focus();
+                inputsRef.current[index - 1]?.focus();
             }
         }
     };
+
+    const handleSendOtp = async () => {
+        try {
+            await onSendOtp();
+            setTimer(60);
+        } catch (error) {
+            console.log(error);
+        }
+    };
+
+    const handleConfirm = () => {
+        const enteredOtp = otp.join("");
+
+        if (enteredOtp.length !== 6) {
+            return;
+        }
+
+        onConfirm(enteredOtp);
+    };
+
     return (
         <div className="modal-overlay">
             <div className="modal-card" ref={modalRef}>
+
                 <div className="modal-header d-flex justify-content-between align-items-center">
                     <h2>Sign Up OTP</h2>
-                    <button onClick={onClose} className="close-btn">
+
+                    <button
+                        onClick={onClose}
+                        className="close-btn"
+                    >
                         <X size={18} />
                     </button>
                 </div>
 
                 <div className="modal-body">
+
                     <div className="input-groupp">
-                        <label>Enter OTP</label>
+
+                        <label>Enter OTP sent to {maskEmail(submitData?.email)}</label>
+
                         <div className="otp-container">
                             {otp.map((digit, i) => (
                                 <input
@@ -69,6 +114,7 @@ const signupOtp = () => {
                                 />
                             ))}
                         </div>
+
                         <button
                             type="button"
                             className="sendd-btn"
@@ -79,17 +125,22 @@ const signupOtp = () => {
                         </button>
                     </div>
 
-
                     <div className="modal-footer d-flex justify-content-end gap-2">
-                        <button className="sendd-btn">
-                            <Check size={18} /> Confirm
-                        </button>
-                    </div>
-                </div>
 
+                        <button
+                            className="sendd-btn"
+                            onClick={handleConfirm}
+                        >
+                            <Check size={18} />
+                            Confirm
+                        </button>
+
+                    </div>
+
+                </div>
             </div>
         </div>
     );
-}
+};
 
-export default signupOtp
+export default SignupOtp;

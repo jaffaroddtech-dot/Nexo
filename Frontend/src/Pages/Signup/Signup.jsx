@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
-import { registerUser } from "../../../Apis/auth";
+import { registerUser, sendOtp, getProfile } from "../../../Apis/auth";
+import SignupOtp from "../../Components/signupOtp/signupOtp";
 import logo from "../../assets/logo.png";
 import { toast } from "react-toastify"
-import { getProfile } from "../../../Apis/auth";
 import { useDispatch } from "react-redux";
 import { setCredentials } from "../../features/authSlice";
 import { useNavigate } from "react-router-dom";
@@ -21,24 +21,50 @@ const Signup = () => {
     } = useForm();
 
     const [showPassword, setShowPassword] = useState(false);
+    const [submitData, setSubmitData] = useState(null);
+    const [openOtpModal, setOpenOtpModal] = useState(false);
 
     const onSubmit = async (data) => {
         try {
-            const response = await registerUser(data);
+            setSubmitData(data);
+            setOpenOtpModal(true);
+        } catch (err) {
+            toast.error("Signup failed");
+        }
+    };
+
+    const handleSendOtp = async () => {
+        try {
+            await sendOtp({ email: submitData.email, purpose: "signup" });
+            toast.success("OTP sent successfully");
+        } catch (err) {
+            console.error(err);
+            toast.error(err?.response?.data?.message || "Failed to send OTP");
+            throw err;
+        }
+    };
+
+    const handleConfirmOtp = async (otp) => {
+        try {
+            const response = await registerUser({ ...submitData, otp });
             if (response.status) {
-                toast.success(response.message);
-                localStorage.setItem("@token", response.token);
-                const userRes = await getProfile();
-                console.log(userRes)
-                if (userRes.status) {
-                    dispatch(setCredentials({ token: response.token, user: userRes.data }));
-                    navigate("/"); // direct dashboard
+                const profileResponse = await getProfile(response.token);
+                console.log("Profile response after signup:", profileResponse);
+                if (profileResponse.status) {
+                    dispatch(setCredentials({ token: response.token, user: profileResponse.data }));
+                    localStorage.setItem("user", JSON.stringify(profileResponse.data));
+                    toast.success("Signup successful");
+                    setOpenOtpModal(false);
+                    navigate("/user");
+                } else {
+                    toast.error("Failed to fetch profile after signup");
                 }
             } else {
                 toast.error(response.message);
             }
-        } catch (err) {
-            toast.error("Signup failed");
+        } catch (error) {
+            toast.error(error?.response?.data?.message || "Signup failed");
+            console.log("Signup error:", error);
         }
     };
 
@@ -184,7 +210,6 @@ const Signup = () => {
                                 className="form-check-input"
                                 id="Agreement"
                                 {...register("Agreement", { required: "Please agree to the Terms and Privacy Policy" })}
-
                             />
                             <label
                                 className="form-check-label nexo-check-label"
@@ -203,6 +228,14 @@ const Signup = () => {
                     </form>
                 </div>
             </main>
+
+            <SignupOtp
+                isOpen={openOtpModal}
+                onClose={() => setOpenOtpModal(false)}
+                submitData={submitData}
+                onSendOtp={handleSendOtp}
+                onConfirm={handleConfirmOtp}
+            />
         </div>
     );
 };

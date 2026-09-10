@@ -7,17 +7,14 @@ export default time;
 
 
 // utils/formatPhone.js
-export const formatPhoneNumber = (number) => {
-  // Agar number "0" se start ho raha hai (jaise 0334...)
-  if (number.startsWith("0")) {
-    return "+92" + number.slice(1); // "0334..." -> "+92334..."
-  }
+export const maskEmail = (email) => {
+    if (!email || !email.includes("@")) return email;
 
-  // Agar already +92 format me hai to direct return
-  if (number.startsWith("+92")) {
-    return number;
-  }
+    const [username, domain] = email.split("@");
 
-  // Agar kisi aur format me hai to as-is return
-  return number;
+    if (username.length <= 2) {
+        return `${username[0]}***@${domain}`;
+    }
+
+    return `${username[0]}${"*".repeat(username.length - 2)}${username[username.length - 1]}@${domain}`;
 };
