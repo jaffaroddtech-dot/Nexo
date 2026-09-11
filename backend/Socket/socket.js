@@ -5,9 +5,11 @@ const onlineUsers = new Map(); // userId -> socketId
 let io;
 
 const initSocket = (server) => {
+
+  console.log("🔧 Initializing socket.io server...")
   io = new Server(server, {
     cors: {
-      origin: "http://localhost:51  73",
+      origin: "http://localhost:5173",
       credentials: true,
     },
   });
@@ -43,6 +45,15 @@ const initSocket = (server) => {
       const receiverSocketId = onlineUsers.get(receiverId);
       if (receiverSocketId) {
         io.to(receiverSocketId).emit("userStopTyping", { senderId: socket.userId });
+      }
+    });
+
+
+    socket.on("messagesSeen", ({ receiverId }) => {
+      // receiverId = jiska message maine dekha (matlab wo sender tha)
+      const senderSocketId = onlineUsers.get(receiverId);
+      if (senderSocketId) {
+        io.to(senderSocketId).emit("messagesSeenUpdate", { seenBy: socket.userId });
       }
     });
 

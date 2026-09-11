@@ -91,3 +91,21 @@ exports.getConversations = async (req, res) => {
         return res.status(500).json({ status: false, message: "Server error" });
     }
 };
+
+
+// --- MARK MESSAGES AS SEEN ---
+exports.markAsSeen = async (req, res) => {
+  try {
+    const myId = req.user._id;
+    const { otherUserId } = req.params;
+
+    await Message.updateMany(
+      { senderId: otherUserId, receiverId: myId, seen: false },
+      { $set: { seen: true } }
+    );
+
+    return res.status(200).json({ status: true, message: "Messages marked as seen" });
+  } catch (error) {
+    return res.status(500).json({ status: false, message: "Server error" });
+  }
+};
