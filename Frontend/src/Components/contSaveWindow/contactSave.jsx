@@ -19,7 +19,6 @@ const ContactSave = ({ onClose }) => {
   const onSubmit = async (data) => {
     try {
       const res = await addContact(data);
-      console.log("new",res.data)
       if (res.status) {
         toast.success(res.message);
         dispatch(addContactState(res.data));

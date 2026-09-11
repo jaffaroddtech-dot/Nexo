@@ -21,7 +21,6 @@ const ResetPassword = ({ isOpen, onClose, onSubmit, email }) => {
   if (!isOpen) return null;
 
   const handleSendOtp = async () => {
-    console.log("ye email ja rha hai", email);
     try {
       await sendOtp({ email, purpose: "resetPassword" });
       setTimer(60);

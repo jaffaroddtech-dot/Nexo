@@ -16,7 +16,6 @@ const ContactWindow = ({ contactId, onDeleted }) => {
   const contact = useSelector(state =>
     state.contacts.find(c => c._id === contactId)
   );
-  console.log(contact)
 
   const [editing, setEditing] = useState(false);
   const editRef = useRef(null);

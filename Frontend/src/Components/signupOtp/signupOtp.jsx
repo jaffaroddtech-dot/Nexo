@@ -65,7 +65,6 @@ const SignupOtp = ({ isOpen, onClose, onConfirm, onSendOtp, submitData }) => {
             await onSendOtp();
             setTimer(60);
         } catch (error) {
-            console.log(error);
         }
     };
 

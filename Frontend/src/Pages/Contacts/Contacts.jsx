@@ -13,7 +13,6 @@ const Contacts = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const contacts = useSelector((state) => state.contacts);
-  console.log("contacts", contacts)
   const [showModal, setShowModal] = useState(false);
   const [selectedContactId, setSelectedContactId] = useState(null);
 
@@ -25,7 +24,6 @@ const Contacts = () => {
   const handleAddSuccess = async () => {
     try {
       const res = await getContacts();
-      console.log(res, "res")
       if (res.status) {
         dispatch(setContacts(res.data));
       } else {

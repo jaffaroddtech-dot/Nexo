@@ -25,9 +25,7 @@ const Login = () => {
   const onSubmit = async (data) => {
     try {
       const response = await loginUser(data);
-      console.log("Login response:", response);
 
-      // Axios HTTP code + backend status
       if (response.status) {
         toast.success(response.message);
 
@@ -35,7 +33,6 @@ const Login = () => {
 
         // Get user profile
         const userRes = await getProfile();
-        console.log(userRes);
         if (userRes.status) {
           dispatch(setCredentials({ token: response.token, user: userRes.data }));
           navigate("/");

@@ -49,7 +49,6 @@ const Signup = () => {
             const response = await registerUser({ ...submitData, otp });
             if (response.status) {
                 const profileResponse = await getProfile(response.token);
-                console.log("Profile response after signup:", profileResponse);
                 if (profileResponse.status) {
                     dispatch(setCredentials({ token: response.token, user: profileResponse.data }));
                     localStorage.setItem("user", JSON.stringify(profileResponse.data));
@@ -64,7 +63,6 @@ const Signup = () => {
             }
         } catch (error) {
             toast.error(error?.response?.data?.message || "Signup failed");
-            console.log("Signup error:", error);
         }
     };
 

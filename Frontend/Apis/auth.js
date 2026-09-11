@@ -54,7 +54,6 @@ export const sendOtp = async({email, purpose}) => {
     const res = await requests.post("/auth/sendOtp", { email, purpose });
     return res;
   } catch (error) {
-    console.log("OTP sending failed:", error);
     throw error;
   }
 };
