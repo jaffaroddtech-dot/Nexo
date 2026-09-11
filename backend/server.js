@@ -13,15 +13,6 @@ const app = express();
 
 connectDB();
 
-// 👇 YE SABSE PEHLE — Express ko /socket.io/ requests bilkul touch nahi karni
-app.use((req, res, next) => {
-  console.log("Incoming request:", req.method, req.url); // 👈 add
-  if (req.url.startsWith("/socket.io")) {
-    console.log("🚫 Blocking Express from handling:", req.url); // 👈 add
-    return;
-  }
-  next();
-});
 
 app.use(cors({
   origin: "http://localhost:5173",

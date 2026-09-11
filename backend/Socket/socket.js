@@ -6,7 +6,6 @@ let io;
 
 const initSocket = (server) => {
 
-  console.log("🔧 Initializing socket.io server...")
   io = new Server(server, {
     cors: {
       origin: "http://localhost:5173",

@@ -59,7 +59,6 @@ exports.getUserById = async (req, res) => {
 
 // --- UPDATE USER ---
 exports.updateUser = async (req, res) => {
-  console.log("Update request body:", req.user._id);
   try {
     const userId = req.user._id;
 

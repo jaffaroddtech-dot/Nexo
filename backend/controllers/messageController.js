@@ -5,7 +5,6 @@ const { getReceiverSocketId, getIO } = require("../Socket/socket");
 exports.sendMessage = async (req, res) => {
     try {
         const senderId = req.user._id;
-        console.log("Send message request body:", req.body);
         const { receiverId, text } = req.body;
 
         if (!text || !text.trim()) {
@@ -31,7 +30,6 @@ exports.sendMessage = async (req, res) => {
 exports.getMessages = async (req, res) => {
     try {
         const myId = req.user._id;
-        console.log("Fetching messages for user:", myId);
         const { otherUserId } = req.params;
 
         const messages = await Message.find({
@@ -51,7 +49,6 @@ exports.getMessages = async (req, res) => {
 exports.getConversations = async (req, res) => {
     try {
         const myId = req.user._id;
-        console.log("Fetching conversations for user:", myId);
         const messages = await Message.find({
             $or: [{ senderId: myId }, { receiverId: myId }],
         })

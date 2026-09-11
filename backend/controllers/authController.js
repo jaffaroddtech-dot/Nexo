@@ -111,7 +111,6 @@ exports.register = async (req, res) => {
 
 exports.login = async (req, res) => {
   const { email, password } = req.body;
-  console.log("Login request body:", req.body);
   try {
 
     const user = await User.findOne({ email }).select("+password");
@@ -238,8 +237,6 @@ exports.refreshToken = async (req, res) => {
 exports.resetPassword = async (req, res) => {
   try {
     const { email, otp, newPassword, } = req.body;
-    console.log("Reset password request body:", req.body);
-
     const otpRecord = await Otp.findOne({ email });
 
     if (!otpRecord) {
@@ -290,7 +287,6 @@ exports.resetPassword = async (req, res) => {
 // --- SEND OTP ---
 exports.sendOtp = async (req, res) => {
   const { email, purpose } = req.body;
-  console.log("Send OTP request body:", req.body);
   try {
    
     if (purpose === "resetPassword") {
