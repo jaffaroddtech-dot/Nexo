@@ -13,3 +13,7 @@ export const getConversation = async () => {
     const res = await requests.get("/messages/conversations");
     return res;
 };
+export const markAsSeen = async (otherUserId) => {
+  const res = await requests.put(`/messages/seen/${otherUserId}`);
+  return res;
+};

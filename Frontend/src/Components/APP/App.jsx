@@ -9,6 +9,7 @@ import Home from "../../Pages/Home/Home.jsx";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
+import { SocketProvider } from "../../../SocketContext/sockectContext.jsx";
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 const router = createBrowserRouter([
@@ -47,10 +48,10 @@ const router = createBrowserRouter([
 
 function App() {
   return (
-    <>
+    <SocketProvider> 
       <RouterProvider router={router} />
       <ToastContainer position="top-right" autoClose={3000} />
-    </>
+    </SocketProvider> 
   )
 };
 

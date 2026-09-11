@@ -1,25 +1,29 @@
 import React, { useEffect, useState, useRef } from "react";
 import "./Chatwindow.css";
 import Nopfp from "../../Assets/nopfp.jpg";
-import { Phone, Video, Info, Type, Paperclip, Link2, Smile, Trash2, Send } from "lucide-react";
+import { Phone, Video, Info, Type, Paperclip, Link2, Smile, Trash2, Send, CheckCheck } from "lucide-react";
 import { useSelector } from "react-redux";
 import { useSocket } from "../../../SocketContext/sockectContext.jsx";
-import { getMessages, sendMessage } from "../../../Apis/messages";
+import { getMessages, sendMessage, markAsSeen } from "../../../Apis/messages";
 
-const ChatWindow = ({ chatUser }) => {
+const ChatWindow = ({ chatUser, onMessageSent }) => {
   const { user } = useSelector((state) => state.auth);
   const { socket, onlineUsers } = useSocket();
   const [messages, setMessages] = useState([]);
   const [text, setText] = useState("");
+  const [isTyping, setIsTyping] = useState(false); // 👈 dusra user type kar raha hai ya nahi
   const bottomRef = useRef(null);
+  const typingTimeoutRef = useRef(null); // 👈 debounce ke liye
 
-  // Purani messages load karo jab chatUser badle
+  // Purani messages load karo + seen mark karo
   useEffect(() => {
     if (!chatUser) return;
     const fetchMessages = async () => {
       try {
         const res = await getMessages(chatUser._id);
         if (res.status) setMessages(res.messages);
+        await markAsSeen(chatUser._id);
+        socket?.emit("messagesSeen", { receiverId: chatUser._id }); // 👈 dusre ko batao maine dekh liya
       } catch (err) {
         console.error(err);
       }
@@ -27,7 +31,7 @@ const ChatWindow = ({ chatUser }) => {
     fetchMessages();
   }, [chatUser]);
 
-  // Realtime naya message listen karo
+  // Realtime listeners
   useEffect(() => {
     if (!socket) return;
 
@@ -38,28 +42,82 @@ const ChatWindow = ({ chatUser }) => {
 
       if (isRelevant) {
         setMessages((prev) => [...prev, message]);
+        if (message.senderId === chatUser?._id) {
+          markAsSeen(chatUser._id);
+          socket.emit("messagesSeen", { receiverId: chatUser._id });
+        }
+      }
+    };
+
+    const handleUserTyping = ({ senderId }) => {
+      if (senderId === chatUser?._id) setIsTyping(true);
+    };
+
+    const handleUserStopTyping = ({ senderId }) => {
+      if (senderId === chatUser?._id) setIsTyping(false);
+    };
+
+    const handleMessagesSeen = ({ seenBy }) => {
+      // Jab dusra user mera message dekh le, apne messages ko "seen: true" update karo
+      if (seenBy === chatUser?._id) {
+        setMessages((prev) =>
+          prev.map((msg) =>
+            msg.senderId === user._id ? { ...msg, seen: true } : msg
+          )
+        );
       }
     };
 
     socket.on("newMessage", handleNewMessage);
-    return () => socket.off("newMessage", handleNewMessage);
+    socket.on("userTyping", handleUserTyping);
+    socket.on("userStopTyping", handleUserStopTyping);
+    socket.on("messagesSeenUpdate", handleMessagesSeen);
+
+    return () => {
+      socket.off("newMessage", handleNewMessage);
+      socket.off("userTyping", handleUserTyping);
+      socket.off("userStopTyping", handleUserStopTyping);
+      socket.off("messagesSeenUpdate", handleMessagesSeen);
+    };
   }, [socket, chatUser, user]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, isTyping]);
+
+  // Chat badalte waqt typing state reset karo
+  useEffect(() => {
+    setIsTyping(false);
+  }, [chatUser]);
 
   const handleSend = async () => {
     if (!text.trim()) return;
     try {
       const res = await sendMessage({ receiverId: chatUser._id, text });
       if (res.status) {
-        setMessages((prev) => [...prev, res.message]); // apna message turant dikha do
+        setMessages((prev) => [...prev, res.message]);
         setText("");
+        socket?.emit("stopTyping", { receiverId: chatUser._id }); // 👈 send hote hi typing band
+        clearTimeout(typingTimeoutRef.current);
+        onMessageSent?.(res.message);
       }
     } catch (err) {
       console.error(err);
     }
+  };
+
+  // 👇 Input change pe typing event bhejo (debounced)
+  const handleInputChange = (e) => {
+    setText(e.target.value);
+
+    if (!socket || !chatUser) return;
+
+    socket.emit("typing", { receiverId: chatUser._id });
+
+    clearTimeout(typingTimeoutRef.current);
+    typingTimeoutRef.current = setTimeout(() => {
+      socket.emit("stopTyping", { receiverId: chatUser._id });
+    }, 1500); // 1.5s ruk gaye typing se to stopTyping bhej do
   };
 
   if (!chatUser) {
@@ -74,12 +132,16 @@ const ChatWindow = ({ chatUser }) => {
   return (
     <div className="chat-window">
       <div className="chat-header">
-        <img src={chatUser.profilePic || Nopfp} alt="" height={40} className="rounded-circle" />
+        <img src={chatUser.profilePic || Nopfp} alt="" height={40} className="profile-image" />
         <div className="chat-user-info w-100 d-flex justify-content-between align-items-center">
           <div>
             <h4 className="username p-0 m-0">{chatUser.name}</h4>
             <p className="online-indicator p-0 m-0">
-              {onlineUsers.includes(chatUser._id) ? "Online" : "Offline"}
+              {isTyping
+                ? "typing..."
+                : onlineUsers.includes(chatUser._id)
+                  ? <span style={{ color: "#16a808" }}>Online</span>
+                  : "Offline"}
             </p>
           </div>
 
@@ -92,14 +154,32 @@ const ChatWindow = ({ chatUser }) => {
       </div>
 
       <div className="chat-body">
-        {messages.map((msg) => (
-          <div
-            key={msg._id}
-            className={msg.senderId === user._id ? "sent" : "received"}
-          >
-            {msg.text}
+        {messages.map((msg, index) => {
+          const isMine = msg.senderId === user._id;
+          const isLastMineMessage =
+            isMine && index === messages.map((m) => m.senderId === user._id).lastIndexOf(true);
+
+          return (
+            <div key={msg._id} className={isMine ? "sent" : "received"}>
+              {msg.text}
+              {/* Sirf apna last sent message pe seen/delivered dikhao */}
+              {isLastMineMessage && (
+                <span className={`seen-status ${msg.seen ? "seen" : "delivered"}`}>
+                  {msg.seen ? <CheckCheck size={15} /> : <CheckCheck size={15} />}
+                </span>
+              )}
+            </div>
+          );
+        })}
+
+        {isTyping && (
+          <div className="typing-indicator received">
+            <span className="dot"></span>
+            <span className="dot"></span>
+            <span className="dot"></span>
           </div>
-        ))}
+        )}
+
         <div ref={bottomRef} />
       </div>
 
@@ -109,7 +189,7 @@ const ChatWindow = ({ chatUser }) => {
           placeholder="Type a message..."
           className="message-input"
           value={text}
-          onChange={(e) => setText(e.target.value)}
+          onChange={handleInputChange}
           onKeyDown={(e) => e.key === "Enter" && handleSend()}
         />
 

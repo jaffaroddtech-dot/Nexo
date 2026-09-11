@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import "./ContactWindow.css";
 import {
   Phone, MessageCircle, Trash2, Send, Edit2, Check, UserRound, Info, MapPin, Mail, MessageCircleMore
@@ -10,6 +11,7 @@ import { toast } from "react-toastify";
 import defaultPic from "../../assets/default.jfif";
 
 const ContactWindow = ({ contactId, onDeleted }) => {
+  const navigate = useNavigate();
   const dispatch = useDispatch();
   const contact = useSelector(state =>
     state.contacts.find(c => c._id === contactId)
@@ -166,7 +168,16 @@ const ContactWindow = ({ contactId, onDeleted }) => {
             <button className="delete-btn" onClick={handleDelete}>
               <Trash2 />
             </button>
-            <button className="sendd-btn">
+            <button
+              className="sendd-btn"
+              onClick={() =>
+                navigate("/", {
+                  state: {
+                    chatUser: contact.contactUser,
+                  },
+                })
+              }
+            >
               <Send />
             </button>
           </div>
@@ -175,4 +186,4 @@ const ContactWindow = ({ contactId, onDeleted }) => {
     </div>
   );
 }
-  export default ContactWindow;
+export default ContactWindow;
