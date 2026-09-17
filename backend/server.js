@@ -21,7 +21,7 @@ app.use(cors({
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(globalLimiter);
+// app.use(globalLimiter);
 
 app.get("/", (req, res) => {
   res.status(200).json({ message: "NEXO API is running", status: true });

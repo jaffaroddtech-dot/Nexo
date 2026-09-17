@@ -4,7 +4,6 @@ const User = require("../models/User");
 // Add Contact
 exports.addContact = async (req, res) => {
   const {Name, phoneNumber } = req.body;
-  console.log(Name,phoneNumber)
   try {
     const foundUser = await User.findOne({ phoneNumber });
     if (!foundUser) {
@@ -79,12 +78,10 @@ exports.deleteContact = async (req, res) => {
 // Get Contacts
 exports.getContacts = async (req, res) => {
   try {
-    console.log("contacts",req.user._id)
     const user = await User.findById(req.user._id).populate({
       path: "contacts",
       populate: { path: "contactUser", select: "name phoneNumber online bio country profilePic email" }
     });
-    console.log("user",user)
     return res.status(200).json({ message: "Contacts fetched successfully", data: user.contacts, status: true });
   } catch (error) {
     return res.status(500).json({ message: "Something went wrong!", error: error.message, status: false });

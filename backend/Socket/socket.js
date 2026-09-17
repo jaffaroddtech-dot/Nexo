@@ -1,5 +1,7 @@
 const { Server } = require("socket.io");
 const jwt = require("jsonwebtoken");
+const Message = require('../models/Messages');
+
 
 const onlineUsers = new Map(); // userId -> socketId
 let io;
@@ -47,12 +49,55 @@ const initSocket = (server) => {
       }
     });
 
+    socket.on("newMessage", ({ receiverId, message }) => {
+      const receiverSocketId =
+        onlineUsers.get(receiverId?.toString());
+      if (receiverSocketId) {
+        io.to(receiverSocketId).emit(
+          "newMessage",
+          {
+            message,
+          }
+        );
+      }
+    });
 
-    socket.on("messagesSeen", ({ receiverId }) => {
-      // receiverId = jiska message maine dekha (matlab wo sender tha)
-      const senderSocketId = onlineUsers.get(receiverId);
-      if (senderSocketId) {
-        io.to(senderSocketId).emit("messagesSeenUpdate", { seenBy: socket.userId });
+    socket.on(
+      "messagesSeen",
+      async ({ receiverId }) => {
+        try {
+          await Message.updateMany(
+            {
+              senderId: receiverId,
+              receiverId: socket.userId,
+              seen: false,
+            },
+            {
+              $set: { seen: true },
+            });
+
+          const senderSocketId =
+            onlineUsers.get(
+              receiverId?.toString()
+            );
+          if (senderSocketId) {
+            io.to(senderSocketId).emit(
+              "messagesSeenUpdate",
+              { seenBy: socket.userId, }
+            );
+          }
+        } catch (error) {
+          console.log("❌ messagesSeen error:", error);
+        }
+      });
+
+    socket.on("messageDeleted", ({ receiverId, messageId }) => {
+      const receiverSocketId = onlineUsers.get(receiverId?.toString());
+
+      if (receiverSocketId) {
+        io.to(receiverSocketId).emit("messageDeleted", {
+          messageId,
+        });
       }
     });
 
