@@ -14,6 +14,14 @@ export const getConversation = async () => {
     return res;
 };
 export const markAsSeen = async (otherUserId) => {
-  const res = await requests.put(`/messages/seen/${otherUserId}`);
+    const res = await requests.put(`/messages/seen/${otherUserId}`);
+    return res;
+};
+export const deleteMessageForMe = async (messageId) => {
+    const res = await requests.delete(`/messages/delete-for-me/${messageId}`);
+    return res;
+};
+export const deleteMessageForEveryone = async (messageId) => {
+  const res = await requests.delete(`/messages/delete-for-everyone/${messageId}`);
   return res;
 };
