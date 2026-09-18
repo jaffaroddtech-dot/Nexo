@@ -1,4 +1,5 @@
 const Message = require("../models/Messages");
+const Contact = require("../models/Contact");
 const { getReceiverSocketId, getIO } = require("../Socket/socket");
 
 // --- SEND MESSAGE ---
@@ -52,15 +53,19 @@ exports.getMessages = async (req, res) => {
 exports.getConversations = async (req, res) => {
     try {
         const myId = req.user._id;
+
         const messages = await Message.find({
-            $or: [{ senderId: myId }, { receiverId: myId }],
+            $or: [
+                { senderId: myId },
+                { receiverId: myId }
+            ],
             deletedFor: {
-                $nin: [myId]
-            }
+                $nin: [myId],
+            },
         })
             .sort({ createdAt: -1 })
-            .populate("senderId", "name profilePic savedName")
-            .populate("receiverId", "name profilePic savedName");
+            .populate("senderId", "name profilePic")
+            .populate("receiverId", "name profilePic");
 
         if (!messages.length) {
             return res.status(200).json({
@@ -69,15 +74,36 @@ exports.getConversations = async (req, res) => {
                 message: "No conversations found",
             });
         }
+
+        const contacts = await Contact.find({
+            owner: myId,
+        });
+
+
+        const contactsMap = new Map(
+            contacts.map((contact) => [
+                contact.contactUser.toString(),
+                contact.savedName,
+            ])
+        );
+
         const conversationsMap = new Map();
 
         messages.forEach((msg) => {
             const otherUser =
-                msg.senderId._id.toString() === myId.toString() ? msg.receiverId : msg.senderId;
+                String(msg.senderId._id) === String(myId)
+                    ? msg.receiverId
+                    : msg.senderId;
 
             if (!conversationsMap.has(otherUser._id.toString())) {
+                const savedName =
+                    contactsMap.get(otherUser._id.toString());
+
                 conversationsMap.set(otherUser._id.toString(), {
-                    user: otherUser,
+                    user: {
+                        ...otherUser.toObject(),
+                        name: savedName || otherUser.name,
+                    },
                     lastMessage: msg.isDeleted
                         ? "🚫 This message was deleted"
                         : msg.text,
@@ -86,13 +112,19 @@ exports.getConversations = async (req, res) => {
             }
         });
 
-
         return res.status(200).json({
             status: true,
-            conversations: Array.from(conversationsMap.values()),
+            conversations: Array.from(
+                conversationsMap.values()
+            ),
         });
     } catch (error) {
-        return res.status(500).json({ status: false, message: "Server error" });
+        console.error("Get Conversations Error:", error);
+
+        return res.status(500).json({
+            status: false,
+            message: "Server error",
+        });
     }
 };
 
