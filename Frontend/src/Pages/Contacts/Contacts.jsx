@@ -131,6 +131,7 @@ const Contacts = () => {
           <ContactWindow contactId={selectedContactId} onDeleted={() => setSelectedContactId(null)} />
         ) : (
           <div className="empty-contact d-flex flex-column justify-content-center">
+            <div className="contact-logo"></div>
             <h2>Select a contact to view details</h2>
           </div>
         )}

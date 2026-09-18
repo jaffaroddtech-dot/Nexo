@@ -6,7 +6,7 @@ import logo from "../../assets/logo.png";
 import { toast } from "react-toastify"
 import { useDispatch } from "react-redux";
 import { setCredentials } from "../../features/authSlice";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, NavLink, Link } from "react-router-dom";
 import "./Signup.css";
 
 const Signup = () => {
@@ -79,7 +79,9 @@ const Signup = () => {
                         width={65}
                         height={40}
                     />
-                    <span className="nexo-logo-text">NEXO</span>
+                    <NavLink to="/" className="nexo-logo-text">
+                        NEXO
+                    </NavLink>
                 </div>
             </header>
 
@@ -224,6 +226,9 @@ const Signup = () => {
                             Sign up
                         </button>
                     </form>
+                    <p className="text-center nexo-footer-text mt-4 mb-0">
+                        Already have an account? <Link to="/Login" className="nexo-link">Login</Link>
+                    </p>
                 </div>
             </main>
 

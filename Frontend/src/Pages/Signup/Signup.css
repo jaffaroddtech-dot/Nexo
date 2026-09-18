@@ -25,6 +25,7 @@
       font-family: "Bebas Neue", sans-serif;
       font-weight: 900;
       font-style: normal;
+      text-decoration: none;
       font-size: 24px;
       color: white;
   }
@@ -192,3 +193,46 @@
       margin-top: 5px;
       margin-bottom: 0px;
   }
+
+
+  /* Mobile Responsive */
+
+@media (max-width: 576px) {
+  .nexo-header {
+    padding: 0.75rem 1rem;
+  }
+
+  .nexo-card {
+    padding: 1.5rem;
+    border-radius: 12px;
+  }
+
+  .nexo-logo-text {
+    font-size: 20px;
+  }
+
+  .nexo-title {
+    font-size: 1.3rem;
+  }
+
+  .nexo-subtitle {
+    font-size: 0.85rem;
+  }
+
+  .nexo-check-label,
+  .nexo-footer-text {
+    font-size: 0.85rem;
+  }
+
+  .nexo-btn-primary {
+    font-size: 0.85rem;
+  }
+
+  .nexo-toggle-btnn {
+    font-size: 0.75rem;
+  }
+
+  .error {
+    font-size: 9px;
+  }
+}

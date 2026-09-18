@@ -217,7 +217,6 @@ const Home = () => {
           }) : <div>No conversations found.</div>}
         </div>
       </div>
-          {console.log("conversation", conversations)}
       <div className="User-messages">
         <ChatWindow
           chatUser={selectedChat}

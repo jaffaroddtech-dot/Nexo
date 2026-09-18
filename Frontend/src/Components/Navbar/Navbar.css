@@ -58,3 +58,13 @@
 .btn-text{
     color: white;
 }
+
+
+.no-user{
+    text-decoration: none;
+    background-image: url("../../assets/nouser.png");
+    background-size: cover;
+    background-position: center;
+    height: 50px;
+    width: 50px;
+}

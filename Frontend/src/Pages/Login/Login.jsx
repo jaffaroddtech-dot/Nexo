@@ -4,6 +4,7 @@ import { useNavigate, Link } from "react-router-dom";
 import logo from "../../assets/logo.png";
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faApple, faGoogle } from '@fortawesome/free-brands-svg-icons';
+import Forgetpassword from "../../Components/forgetPassword/Forgetpassword";
 import { loginUser } from "../../../Apis/auth";
 import { useDispatch } from "react-redux";
 import { getProfile } from "../../../Apis/auth";
@@ -12,6 +13,7 @@ import { toast } from "react-toastify";
 import "./Login.css";
 
 const Login = () => {
+  const [showForgetPassword, setShowForgetPassword] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const {
@@ -101,7 +103,7 @@ const Login = () => {
             <div className="mb-3">
               <div className="d-flex justify-content-between align-items-center">
                 <label className="nexo-label form-label">Password</label>
-                <a href="#" className="nexo-link mb-1">Forgot password?</a>
+                <a onClick={() => setShowForgetPassword(true)} className="nexo-link mb-1">Forgot password?</a>
               </div>
               <div className="nexo-input-wrapper">
                 <input
@@ -172,6 +174,16 @@ const Login = () => {
 
         </div>
       </main>
+
+
+      {showForgetPassword && (
+        <Forgetpassword
+          isOpen={showForgetPassword}
+          onClose={() =>
+            setShowForgetPassword(false)
+          }
+        />
+      )}
     </div>
   );
 };

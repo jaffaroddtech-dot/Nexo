@@ -30,7 +30,7 @@ const Navbar = () => {
             <img src={user.profilePic || defaultPic } alt="Profile" className="profile-image rounded-5" height={45} />
           </NavLink>
         ) : (
-          <NavLink to="/login" className="btn"> <span className="btn-text">Sign in</span> </NavLink>
+          <NavLink to="/login"> <div className="no-user"></div> </NavLink>
         )}
       </div>
     </div>

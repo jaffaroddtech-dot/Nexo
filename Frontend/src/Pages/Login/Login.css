@@ -172,3 +172,43 @@
     color: #6c757d;
     font-size: 0.9rem;
   }
+
+
+
+  /* Mobile Responsive */
+
+  @media (max-width: 576px) {
+    .nexo-header {
+      padding: 0.75rem *rem;
+    }
+
+    .nexo-card {
+      padding: 1.5rem;
+      border-radius: 12px;
+    }
+
+    .nexo-logo-text {
+      font-size: 20px;
+    }
+
+    .nexo-title {
+       font-size: 1.25rem;
+    }
+
+    .nexo-subtitle,
+    .nexo-footer-text,
+    .nexo-check-label {
+       font-size: 0.85rem;
+    }
+
+    .nexo-btn-primary,
+    .nexo-btn-social {
+      font-size: 0.85rem;
+    }
+
+    .nexo-toggle-btn {
+      font-size: 0.75rem;
+    }
+
+    
+  }

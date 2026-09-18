@@ -28,7 +28,6 @@ import {
 } from "../../../Apis/messages";
 
 const ChatWindow = ({ chatUser, onMessageSent }) => {
-  console.log( "chatuser", chatUser);
   const { user } = useSelector((state) => state.auth);
   const { socket, onlineUsers } = useSocket();
 
