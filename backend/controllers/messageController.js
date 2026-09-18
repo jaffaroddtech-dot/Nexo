@@ -61,7 +61,7 @@ exports.getConversations = async (req, res) => {
             ],
             deletedFor: {
                 $nin: [myId],
-            },
+            },  
         })
             .sort({ createdAt: -1 })
             .populate("senderId", "name profilePic")
