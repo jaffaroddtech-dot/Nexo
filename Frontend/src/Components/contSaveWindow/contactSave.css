@@ -62,3 +62,20 @@
 .close-btn:hover {
   color: #ff4d4d; /* red hover for clarity */
 }
+
+
+@media (max-width: 768px) {
+  .contact-card {
+    width: 90%;
+    max-width: 350px;
+    padding: 20px;
+    margin: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .contact-card {
+    width: calc(100% - 20px);
+    padding: 15px;
+  }
+}

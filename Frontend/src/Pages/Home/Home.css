@@ -173,9 +173,9 @@
     background-color: #EDE9FB;
 }
 
-.profilePictures {
+/* .profilePictures {
     border-radius: 50%;
-}
+} */
 
 
 .message-content {
@@ -223,14 +223,14 @@
 
 
 
-.profile-image {
+/* .profile-image {
     height: 56px;
     width: 56px;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-}
+} */
 
 
 
@@ -253,4 +253,123 @@
   flex-shrink: 0;
   align-self: center;
   margin-left: auto;
+}
+
+
+
+.mobile-back-btn {
+  display: none;
+}
+
+.online-dot {
+  position: absolute;
+  bottom: 3px;
+  right: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #22c55e;
+  border: 2px solid white;
+}
+
+
+.profilePictures {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+}
+
+.profile-image {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.online-dot {
+  position: absolute;
+  bottom: 2px;
+  right: 0px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #7758f9;
+  border: 2px solid white;
+  box-sizing: border-box;
+  z-index: 10;
+}
+
+
+@media (max-width: 992px) {
+  .messages-content {
+    width: 320px;
+    min-width: 320px;
+  }
+}
+
+@media (max-width: 768px) {
+  .messages-content {
+    width: 100%;
+    min-width: 100%;
+  }
+
+  .User-messages {
+    width: 100%;
+  }
+
+  .mobile-back-btn {
+    display: block;
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 999;
+    border: none;
+    background: #7758f9;
+    color: white;
+    border-radius: 8px;
+    padding: 8px 14px;
+  }
+
+  .profile-image {
+    width: 56px;
+    height: 56px;
+  }
+
+  .message-sender {
+    font-size: 14px;
+  }
+
+  .message-text {
+    font-size: 12px;
+  }
+
+  .new-button {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .radio-input {
+    width: 100px;
+  }
+
+  .profile-image {
+    width: 42px;
+    height: 42px;
+  }
+
+  .message-time {
+    font-size: 10px;
+  }
+
+  .message-sender {
+    font-size: 13px;
+  }
+
+  .message-text {
+    font-size: 11px;
+  }
 }

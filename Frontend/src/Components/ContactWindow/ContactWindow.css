@@ -324,3 +324,69 @@
   align-items: center;
 }
 
+
+@media (max-width: 992px) {
+  .contact-card {
+    width: 90%;
+    max-width: 500px;
+  }
+}
+
+@media (max-width: 768px) {
+  .contact-page {
+    margin-top: 0;
+    padding: 20px;
+    height: 100vh;
+  }
+
+  .contact-card {
+    width: 100%;
+    min-height: auto;
+  }
+
+  .profile-avatar {
+    width: 90px;
+    height: 90px;
+    top: -50px;
+  }
+
+  .contact-header h2 {
+    font-size: 20px;
+  }
+
+  .detail-row,
+  .info-row {
+    font-size: 13px;
+  }
+
+  .contact-logo {
+    width: 220px;
+    height: 220px;
+  }
+}
+
+@media (max-width: 480px) {
+  .contact-body {
+    padding: 20px 15px;
+  }
+
+  .contact-header h2 {
+    font-size: 18px;
+  }
+
+  .edit-input {
+    width: 80px;
+  }
+
+  .contact-logo {
+    width: 170px;
+    height: 170px;
+  }
+
+  .detail-row span,
+  .info-row span {
+    font-size: 12px;
+  }
+}
+
+

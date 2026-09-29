@@ -164,3 +164,117 @@
 }
 
 
+/* =================================
+   TABLET
+================================= */
+
+@media (max-width: 992px) {
+  .left-side {
+    width: 320px;
+    min-width: 320px;
+  }
+
+  .contact-avatar-sm {
+    width: 50px;
+    height: 50px;
+  }
+}
+
+/* =================================
+   MOBILE
+================================= */
+
+@media (max-width: 768px) {
+  .contactsMain {
+    width: 100%;
+    overflow: hidden;
+  }
+
+  .left-side {
+    width: 100%;
+    min-width: 100%;
+    border-right: none;
+  }
+
+  .right-side {
+    width: 100%;
+  }
+
+  .contacts-search {
+    font-size: 14px;
+  }
+
+  .contact-item {
+    padding: 10px;
+    gap: 10px;
+  }
+
+  .contact-avatar-sm {
+    width: 46px;
+    height: 46px;
+  }
+
+  .bio {
+    font-size: 12px;
+  }
+
+  .contact-info h6 {
+    font-size: 14px;
+  }
+
+  .addCtsBtn {
+    padding: 5px 12px;
+  }
+}
+
+/* =================================
+   SMALL MOBILE
+================================= */
+
+@media (max-width: 480px) {
+  .left-side {
+    width: 100%;
+  }
+
+  .contact-avatar-sm {
+    width: 42px;
+    height: 42px;
+  }
+
+  .contact-info h6 {
+    font-size: 13px;
+  }
+
+  .bio {
+    font-size: 11px;
+  }
+
+  .contact-letter {
+    font-size: 12px;
+  }
+
+  .addCtsBtn {
+    padding: 4px 10px;
+  }
+}
+
+
+
+.mobile-back-btn {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .mobile-back-btn {
+    display: block;
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 999;
+    border: none;
+    background: #7758f9;
+    color: white;
+    border-radius: 8px;
+    padding: 8px 14px;
+  }
+}

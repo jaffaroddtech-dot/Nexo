@@ -474,3 +474,56 @@
   scrollbar-width: thin;
   scrollbar-color: #7758f9 #0f1024;
 }
+
+
+
+
+.reply-preview{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+
+  padding:10px;
+  margin-bottom:10px;
+
+  background:#1f1f1f;
+  border-left:4px solid #7758f9;
+  border-radius:8px;
+}
+
+.reply-title{
+  color:#7758f9;
+  font-size:12px;
+  font-weight:600;
+}
+
+.reply-preview-text{
+  margin:0;
+  color:white;
+  font-size:13px;
+}
+
+.reply-close{
+  background:none;
+  border:none;
+  color:white;
+  cursor:pointer;
+}
+
+
+.reply-inside-message{
+  background:rgba(255,255,255,.1);
+  border-left:3px solid #7758f9;
+
+  padding:6px 8px;
+  margin-bottom:6px;
+
+  border-radius:6px;
+
+  font-size:12px;
+  opacity:.9;
+
+  max-width:220px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}

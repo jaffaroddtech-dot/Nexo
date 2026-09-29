@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useRef } from "react";
 import "./Chatwindow.css";
 import Nopfp from "../../Assets/nopfp.jpg";
+import { formatLastSeen } from "../../Helpers/Helper.js";
+
 
 import {
   Phone,
@@ -32,6 +34,7 @@ const ChatWindow = ({ chatUser, onMessageSent }) => {
   const { socket, onlineUsers } = useSocket();
 
   const [messages, setMessages] = useState([]);
+  const [replyMessage, setReplyMessage] = useState(null);
   const [text, setText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [openMenuId, setOpenMenuId] = useState(null);
@@ -124,9 +127,9 @@ const ChatWindow = ({ chatUser, onMessageSent }) => {
         prev.map((msg) =>
           msg.senderId === user._id
             ? {
-                ...msg,
-                seen: true,
-              }
+              ...msg,
+              seen: true,
+            }
             : msg
         )
       );
@@ -137,10 +140,10 @@ const ChatWindow = ({ chatUser, onMessageSent }) => {
         prev.map((msg) =>
           msg._id === messageId
             ? {
-                ...msg,
-                isDeleted: true,
-                text: "",
-              }
+              ...msg,
+              isDeleted: true,
+              text: "",
+            }
             : msg
         )
       );
@@ -182,6 +185,7 @@ const ChatWindow = ({ chatUser, onMessageSent }) => {
       const res = await sendMessage({
         receiverId: chatUser._id,
         text: messageText,
+        replyTo: replyMessage?._id || null
       });
 
       if (res.status) {
@@ -198,6 +202,7 @@ const ChatWindow = ({ chatUser, onMessageSent }) => {
         });
 
         setText("");
+        setReplyMessage(null);
 
         socket?.emit("stopTyping", {
           receiverId: chatUser._id,
@@ -269,10 +274,10 @@ const ChatWindow = ({ chatUser, onMessageSent }) => {
           prev.map((msg) =>
             String(msg._id) === String(messageId)
               ? {
-                  ...msg,
-                  isDeleted: true,
-                  text: "",
-                }
+                ...msg,
+                isDeleted: true,
+                text: "",
+              }
               : msg
           )
         );
@@ -319,7 +324,7 @@ const ChatWindow = ({ chatUser, onMessageSent }) => {
               ) : onlineUsers.includes(chatUser._id) ? (
                 <span style={{ color: "#16a808" }}>Online</span>
               ) : (
-                "Offline"
+                formatLastSeen(chatUser.lastSeen)
               )}
             </p>
           </div>
@@ -346,14 +351,19 @@ const ChatWindow = ({ chatUser, onMessageSent }) => {
           const isLastMineMessage =
             isMine &&
             index ===
-              messages
-                .map((m) => m.senderId === user._id)
-                .lastIndexOf(true);
+            messages
+              .map((m) => m.senderId === user._id)
+              .lastIndexOf(true);
 
           if (isMine) {
             return (
               <div key={msg._id} className="sent-message-wrapper">
-                <div className="sent">
+                <div className="sent" onDoubleClick={() => setReplyMessage(msg)}>
+                  {msg.replyTo && (
+                    <div className="reply-inside-message">
+                      {msg.replyTo.text}
+                    </div>
+                  )}
                   {msg.isDeleted ? (
                     <span className="deleted-msg">
                       🚫 This message was deleted
@@ -365,9 +375,8 @@ const ChatWindow = ({ chatUser, onMessageSent }) => {
                   {/* Seen / Delivered */}
                   {isLastMineMessage && !msg.isDeleted && (
                     <span
-                      className={`seen-status ${
-                        msg.seen ? "seen" : "delivered"
-                      }`}
+                      className={`seen-status ${msg.seen ? "seen" : "delivered"
+                        }`}
                     >
                       <CheckCheck size={15} />
                     </span>
@@ -396,6 +405,14 @@ const ChatWindow = ({ chatUser, onMessageSent }) => {
                           }
                         >
                           Delete for Everyone
+                        </button>
+                        <button
+                          onClick={() => {
+                            setReplyMessage(msg);
+                            setOpenMenuId(null);
+                          }}
+                        >
+                          Reply
                         </button>
                         <button
                           onClick={() => handleDeleteForMe(msg._id)}
@@ -432,12 +449,25 @@ const ChatWindow = ({ chatUser, onMessageSent }) => {
                       >
                         Delete for Me
                       </button>
+                      <button
+                        onClick={() => {
+                          setReplyMessage(msg);
+                          setOpenMenuId(null);
+                        }}
+                      >
+                        Reply
+                      </button>
                     </div>
                   )}
                 </div>
               )}
 
-              <div className="received">
+              <div className="received" onDoubleClick={() => setReplyMessage(msg)}>
+                {msg.replyTo && (
+                  <div className="reply-inside-message">
+                    {msg.replyTo.text}
+                  </div>
+                )}
                 {msg.isDeleted ? (
                   <span className="deleted-msg">
                     🚫 This message was deleted
@@ -461,6 +491,26 @@ const ChatWindow = ({ chatUser, onMessageSent }) => {
         <div ref={bottomRef} />
       </div>
       <div className="message-box">
+        {replyMessage && (
+          <div className="reply-preview">
+            <div className="reply-preview-left">
+              <span className="reply-title">
+                Replying to
+              </span>
+
+              <p className="reply-preview-text">
+                {replyMessage.text}
+              </p>
+            </div>
+
+            <button
+              className="reply-close"
+              onClick={() => setReplyMessage(null)}
+            >
+              ✕
+            </button>
+          </div>
+        )}
         <input
           type="text"
           placeholder="Type a message..."

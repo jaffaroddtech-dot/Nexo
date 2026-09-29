@@ -6,6 +6,7 @@ import { useSelector } from "react-redux";
 import { getConversation } from "../../../Apis/messages.js";
 import Nopfp from "../../Assets/nopfp.jpg";
 import ChatWindow from "../../Components/Chatwindow/Chatwindow.jsx";
+import { ChevronLeft } from "lucide-react"
 import { useSocket } from "../../../SocketContext/sockectContext.jsx";
 
 const Home = () => {
@@ -14,8 +15,12 @@ const Home = () => {
   const [selected, setSelected] = useState("all");
   const [conversations, setConversations] = useState([]);
   const [selectedChat, setSelectedChat] = useState(null);
+  const [search, setSearch] = useState("");
   const [unreadMap, setUnreadMap] = useState({}); // ✅ { userId: true }
   const location = useLocation();
+  const [isMobile, setIsMobile] = useState(
+    window.innerWidth <= 768
+  );
 
   useEffect(() => {
     if (location.state?.chatUser) {
@@ -23,10 +28,38 @@ const Home = () => {
     }
   }, [location.state]);
 
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+
+    window.addEventListener("resize", handleResize);
+
+    return () =>
+      window.removeEventListener(
+        "resize",
+        handleResize
+      );
+  }, []);
+
   const fetchConversations = useCallback(async () => {
     try {
       const res = await getConversation();
-      if (res.status) setConversations(res.conversations);
+
+      if (res.status) {
+        setConversations(res.conversations);
+
+        const unreadCounts = {};
+
+        res.conversations.forEach((conv) => {
+          if (conv.unreadCount > 0) {
+            unreadCounts[conv.user._id] = conv.unreadCount;
+          }
+        });
+
+        setUnreadMap(unreadCounts);
+      }
     } catch (err) {
       console.error(err);
     }
@@ -112,11 +145,49 @@ const Home = () => {
       );
     };
 
+    const handleUserOffline = ({
+      userId,
+      lastSeen,
+    }) => {
+
+      setConversations((prev) =>
+        prev.map((conv) =>
+          conv.user._id === userId
+            ? {
+              ...conv,
+              user: {
+                ...conv.user,
+                online: false,
+                lastSeen,
+              },
+            }
+            : conv
+        )
+      );
+
+      setSelectedChat((prev) =>
+        prev?._id === userId
+          ? {
+            ...prev,
+            online: false,
+            lastSeen,
+          }
+          : prev
+      );
+    };
+
+
+
+
     socket.on("newMessage", handleNewMessage);
 
     socket.on(
       "messageDeleted",
       handleMessageDeleted
+    );
+    socket.on(
+      "userOffline",
+      handleUserOffline
     );
 
     return () => {
@@ -128,6 +199,11 @@ const Home = () => {
       socket.off(
         "messageDeleted",
         handleMessageDeleted
+      );
+      
+      socket.off(
+        "userOffline",
+        handleUserOffline
       );
     };
   }, [
@@ -156,73 +232,203 @@ const Home = () => {
       ? conversations.filter((conv) => unreadMap[conv.user._id])
       : conversations;
 
+
+  const filteredConversations = visibleConversations.filter((conv) => {
+    const name = conv.user.name?.toLowerCase() || "";
+    const message = conv.lastMessage?.toLowerCase() || "";
+    const query = search.toLowerCase();
+
+    return (
+      name.includes(query) ||
+      message.includes(query)
+    );
+  });
+
+
   return (
     <div className="Main">
-      <div className="messages-content d-flex flex-column justfify-content-start">
-        <div className="p-4 border-bottom">
-          <h3 className="fw-bold mb-1">Chats</h3>
-          <small className="text-muted">Select a conversation to get started</small>
-          <div className="pt-2">
-            <input className="search__input" placeholder="Search Chats..." />
-          </div>
+      {(!isMobile || !selectedChat) && (
+        <div className="messages-content">
+          <div className="p-4 border-bottom">
+            <h3 className="fw-bold mb-1">Chats</h3>
 
-          <div className="mt-3 d-flex align-items-center justify-content-between ">
-            <div
-              className="radio-input"
-              style={{ "--translate": selected === "all" ? "0%" : "100%" }}
-            >
-              <label onClick={() => setSelected("all")}>
-                <span className={selected === "all" ? "active" : ""}>All</span>
-              </label>
-              <label onClick={() => setSelected("unread")}>
-                <span className={selected === "unread" ? "active" : ""}>Unread</span>
-              </label>
-              <div className="selection"></div>
+            <small className="text-muted">
+              Select a conversation to get started
+            </small>
+
+            <div className="pt-2">
+              <input
+                className="search__input"
+                placeholder="Search Chats..."
+                value={search}
+                onChange={(e) =>
+                  setSearch(e.target.value)
+                }
+              />
             </div>
-            <button className="new-button">New Message</button>
+
+            <div className="mt-3 d-flex align-items-center justify-content-between">
+              <div
+                className="radio-input"
+                style={{
+                  "--translate":
+                    selected === "all"
+                      ? "0%"
+                      : "100%",
+                }}
+              >
+                <label
+                  onClick={() =>
+                    setSelected("all")
+                  }
+                >
+                  <span
+                    className={
+                      selected === "all"
+                        ? "active"
+                        : ""
+                    }
+                  >
+                    All
+                  </span>
+                </label>
+
+                <label
+                  onClick={() =>
+                    setSelected("unread")
+                  }
+                >
+                  <span
+                    className={
+                      selected === "unread"
+                        ? "active"
+                        : ""
+                    }
+                  >
+                    Unread
+                  </span>
+                </label>
+
+                <div className="selection"></div>
+              </div>
+
+              <button className="new-button">
+                New Message
+              </button>
+            </div>
+          </div>
+
+          <div className="messages-list mt-3">
+            {filteredConversations.length >
+              0 ? (
+              filteredConversations.map(
+                (conv) => {
+                  const unreadCount =
+                    unreadMap[
+                    conv.user._id
+                    ] || 0;
+
+                  return (
+                    <div
+                      key={conv.user._id}
+                      className="messages"
+                      onClick={() =>
+                        handleSelectChat(
+                          conv.user
+                        )
+                      }
+                    >
+                      <div className="profilePictures">
+                        <img
+                          src={conv.user.profilePic || Nopfp}
+                          alt="Profile"
+                          className="profile-image"
+                        />
+
+                        {onlineUsers.includes(conv.user._id) && (
+                          <span className="online-dot" />
+                        )}
+                      </div>
+
+                      <div className="message-content">
+                        <div className="message-header">
+                          <h6 className="message-sender mb-0">
+                            {
+                              conv.user
+                                .name
+                            }
+                          </h6>
+
+                          <span className="message-time">
+                            {new Date(
+                              conv.lastMessageTime
+                            ).toLocaleTimeString(
+                              [],
+                              {
+                                hour:
+                                  "2-digit",
+                                minute:
+                                  "2-digit",
+                              }
+                            )}
+                          </span>
+                        </div>
+
+                        <p className="message-text">
+                          {
+                            conv.lastMessage
+                          }
+                        </p>
+                      </div>
+
+                      {unreadCount >
+                        0 && (
+                          <span className="unread-dot">
+                            {unreadCount >
+                              9
+                              ? "9+"
+                              : unreadCount}
+                          </span>
+                        )}
+                    </div>
+                  );
+                }
+              )
+            ) : (
+              <div className="no-contacts text-center">
+                <p className="text-muted">
+                  No conversations found
+                </p>
+              </div>
+            )}
           </div>
         </div>
+      )}
 
-        <div className="messages-list mt-3">
-          {visibleConversations.length > 0 ? visibleConversations.map((conv) => {
-            const unreadCount = unreadMap[conv.user._id] || 0;
-            return (
-              <div
-                key={conv.user._id}
-                className="messages p-2 d-flex gap-3"
-                onClick={() => handleSelectChat(conv.user)}
+      {(!isMobile || selectedChat) && (
+        <div className="User-messages">
+          {isMobile &&
+            selectedChat && (
+              <button
+                className="mobile-back-btn"
+                onClick={() =>
+                  setSelectedChat(
+                    null
+                  )
+                }
               >
-                <div className="profilePictures">
-                  <img src={conv.user.profilePic || Nopfp} alt="Profile" className="profile-image" />
-                  {onlineUsers.includes(conv.user._id) && <span className="online-dot" />}
-                </div>
+                <ChevronLeft />
+              </button>
+            )}
 
-                <div className="message-content">
-                  <div className="message-header">
-                    <h6 className="message-sender mb-0">{conv.user.name}</h6>
-                    <span className="message-time">
-                      {new Date(conv.lastMessageTime).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                    </span>
-                  </div>
-                  <p className="message-text">{conv.lastMessage}</p>
-                </div>
-
-                {unreadCount > 0 && (
-                  <span className="unread-dot">
-                    {unreadCount > 9 ? "9+" : unreadCount}
-                  </span>
-                )}
-              </div>
-            );
-          }) : <div>No conversations found.</div>}
+          <ChatWindow
+            chatUser={selectedChat}
+            onMessageSent={
+              fetchConversations
+            }
+          />
         </div>
-      </div>
-      <div className="User-messages">
-        <ChatWindow
-          chatUser={selectedChat}
-          onMessageSent={fetchConversations}
-        />
-      </div>
+      )}
     </div>
   );
 };
