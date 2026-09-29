@@ -6,13 +6,13 @@ const { getReceiverSocketId, getIO } = require("../Socket/socket");
 exports.sendMessage = async (req, res) => {
     try {
         const senderId = req.user._id;
-        const { receiverId, text } = req.body;
+        const { receiverId, text, replyTo } = req.body;
 
         if (!text || !text.trim()) {
             return res.status(400).json({ status: false, message: "Message text is required" });
         }
 
-        const newMessage = await Message.create({ senderId, receiverId, text });
+        const newMessage = await Message.create({ senderId, receiverId, text, replyTo });
 
         // Realtime emit — agar receiver online hai
         const receiverSocketId = getReceiverSocketId(receiverId);
@@ -41,7 +41,9 @@ exports.getMessages = async (req, res) => {
             deletedFor: {
                 $nin: [myId],
             },
-        }).sort({ createdAt: 1 });
+        })
+        .populate("replyTo", "text senderId")
+        .sort({ createdAt: 1 });
 
         return res.status(200).json({ status: true, messages });
     } catch (error) {
@@ -61,11 +63,11 @@ exports.getConversations = async (req, res) => {
             ],
             deletedFor: {
                 $nin: [myId],
-            },  
+            },
         })
             .sort({ createdAt: -1 })
-            .populate("senderId", "name profilePic")
-            .populate("receiverId", "name profilePic");
+            .populate("senderId", "name profilePic online lastSeen")
+            .populate("receiverId", "name profilePic online lastSeen");
 
         if (!messages.length) {
             return res.status(200).json({
@@ -95,20 +97,35 @@ exports.getConversations = async (req, res) => {
                     ? msg.receiverId
                     : msg.senderId;
 
-            if (!conversationsMap.has(otherUser._id.toString())) {
-                const savedName =
-                    contactsMap.get(otherUser._id.toString());
+            const otherUserId = otherUser._id.toString();
 
-                conversationsMap.set(otherUser._id.toString(), {
+            if (!conversationsMap.has(otherUserId)) {
+                const savedName =
+                    contactsMap.get(otherUserId);
+
+                conversationsMap.set(otherUserId, {
                     user: {
                         ...otherUser.toObject(),
                         name: savedName || otherUser.name,
                     },
+
                     lastMessage: msg.isDeleted
                         ? "🚫 This message was deleted"
                         : msg.text,
+
                     lastMessageTime: msg.createdAt,
+
+                    unreadCount: 0,
                 });
+            }
+
+            if (
+                String(msg.receiverId._id) === String(myId) &&
+                msg.seen === false
+            ) {
+                const conversation = conversationsMap.get(otherUserId);
+
+                conversation.unreadCount += 1;
             }
         });
 

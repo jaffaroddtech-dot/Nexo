@@ -26,6 +26,7 @@ const userSchema = new mongoose.Schema(
       trim: true,
     },
     online: { type: Boolean, default: false },
+    lastSeen : { type: Date, default: null},
     contacts: [{ type: mongoose.Schema.Types.ObjectId, ref: "Contact" }],
     bio: { type: String, default: "Hey there! I'm using Nexo" },
     country: { type: String, default: "" },

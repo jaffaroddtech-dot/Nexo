@@ -3,7 +3,7 @@ const User = require("../models/User");
 
 // Add Contact
 exports.addContact = async (req, res) => {
-  const {Name, phoneNumber } = req.body;
+  const { Name, phoneNumber } = req.body;
   try {
     const foundUser = await User.findOne({ phoneNumber });
     if (!foundUser) {
@@ -27,7 +27,7 @@ exports.addContact = async (req, res) => {
     await User.findByIdAndUpdate(req.user._id, { $push: { contacts: newContact._id } });
 
     const populatedContact = await Contact.findById(newContact._id)
-      .populate("contactUser", "name phoneNumber online profilePic bio country email");
+      .populate("contactUser", "name phoneNumber lastSeen online profilePic bio country email");
 
     return res.status(201).json({ message: "Contact saved successfully", data: populatedContact, status: true });
   } catch (error) {
@@ -80,7 +80,7 @@ exports.getContacts = async (req, res) => {
   try {
     const user = await User.findById(req.user._id).populate({
       path: "contacts",
-      populate: { path: "contactUser", select: "name phoneNumber online bio country profilePic email" }
+      populate: { path: "contactUser", select: "name phoneNumber online lastSeen bio country profilePic email" }
     });
     return res.status(200).json({ message: "Contacts fetched successfully", data: user.contacts, status: true });
   } catch (error) {
@@ -100,7 +100,7 @@ exports.updateContact = async (req, res) => {
       { _id: id, owner: req.user._id },
       { savedName },
       { new: true }
-    ).populate("contactUser", "name phoneNumber online bio country profilePic email");
+    ).populate("contactUser", "name phoneNumber lastSeen online bio country profilePic email");
 
     if (!contact) {
       return res.status(404).json({ message: "Contact not found", status: false });
@@ -111,4 +111,5 @@ exports.updateContact = async (req, res) => {
     return res.status(500).json({ message: "Something went wrong!", error: error.message, status: false });
   }
 };
+
 

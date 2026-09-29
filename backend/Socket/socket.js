@@ -1,6 +1,7 @@
 const { Server } = require("socket.io");
 const jwt = require("jsonwebtoken");
 const Message = require('../models/Messages');
+const User = require('../models/User')
 
 
 const onlineUsers = new Map(); // userId -> socketId
@@ -101,9 +102,18 @@ const initSocket = (server) => {
       }
     });
 
-    socket.on("disconnect", () => {
+    socket.on("disconnect", async () => {
       console.log("🔴 Disconnected:", socket.userId);
       onlineUsers.delete(socket.userId);
+      const lastSeen = new Date();
+      await User.findByIdAndUpdate(socket.userId, {
+        online: false,
+        lastSeen,
+      });
+      io.emit("userOffline", {
+        userId: socket.userId,
+        lastSeen,
+      });
       io.emit("getOnlineUsers", Array.from(onlineUsers.keys()));
     });
   });

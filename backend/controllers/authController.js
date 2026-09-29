@@ -136,9 +136,7 @@ exports.login = async (req, res) => {
     res.json({
       status: true,
       token: accessToken,
-
       message: "Login successful",
-      // data: { id: user._id, name: user.name, phoneNumber: user.phoneNumber }
     });
   } catch (err) {
     res.status(500).json({ status: false, message: "Server error" });
@@ -175,6 +173,7 @@ exports.logout = async (req, res) => {
     const user = await User.findById(req.user._id);
     if (user) {
       user.online = false;
+      user.lastSeen = new Date();
       await user.save();
     }
 
