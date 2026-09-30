@@ -25,3 +25,7 @@ export const deleteMessageForEveryone = async (messageId) => {
   const res = await requests.delete(`/messages/delete-for-everyone/${messageId}`);
   return res;
 };
+export const reactToMessage = async (messageId,emoji) => {
+    const res = await requests.patch(`messages/react/${messageId}`,{emoji});
+    return res;
+}

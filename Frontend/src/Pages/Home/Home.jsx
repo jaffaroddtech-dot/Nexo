@@ -16,6 +16,7 @@ const Home = () => {
   const [conversations, setConversations] = useState([]);
   const [selectedChat, setSelectedChat] = useState(null);
   const [search, setSearch] = useState("");
+  const [typingUsers, setTypingUsers] = useState({})
   const [unreadMap, setUnreadMap] = useState({}); // ✅ { userId: true }
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(
@@ -144,6 +145,26 @@ const Home = () => {
         )
       );
     };
+    const handleUserTyping = ({
+      senderId,
+    }) => {
+      setTypingUsers((prev) => ({
+        ...prev,
+        [senderId]: true,
+      }));
+    };
+
+    const handleUserStopTyping = ({
+      senderId,
+    }) => {
+      setTypingUsers((prev) => {
+        const updated = { ...prev };
+
+        delete updated[senderId];
+
+        return updated;
+      });
+    };
 
     const handleUserOffline = ({
       userId,
@@ -186,6 +207,16 @@ const Home = () => {
       handleMessageDeleted
     );
     socket.on(
+      "userTyping",
+      handleUserTyping
+    );
+
+    socket.on(
+      "userStopTyping",
+      handleUserStopTyping
+    );
+
+    socket.on(
       "userOffline",
       handleUserOffline
     );
@@ -197,10 +228,20 @@ const Home = () => {
       );
 
       socket.off(
+        "userTyping",
+        handleUserTyping
+      );
+
+      socket.off(
+        "userStopTyping",
+        handleUserStopTyping
+      );
+
+      socket.off(
         "messageDeleted",
         handleMessageDeleted
       );
-      
+
       socket.off(
         "userOffline",
         handleUserOffline
@@ -374,10 +415,25 @@ const Home = () => {
                           </span>
                         </div>
 
-                        <p className="message-text">
-                          {
-                            conv.lastMessage
+                        <p
+                          className="message-text"
+                          style={
+                            typingUsers[
+                              conv.user._id
+                            ]
+                              ? {
+                                color: "#7758f9",
+                                fontStyle:
+                                  "italic",
+                              }
+                              : {}
                           }
+                        >
+                          {typingUsers[
+                            conv.user._id
+                          ]
+                            ? "typing..."
+                            : conv.lastMessage}
                         </p>
                       </div>
 

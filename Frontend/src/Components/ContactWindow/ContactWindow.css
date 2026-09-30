@@ -390,3 +390,37 @@
 }
 
 
+.sent-menu-wrapper{
+  position: relative;
+}
+
+.reaction-panel {
+  position: absolute;
+
+  right: 40px;
+  top: 0;
+
+  display: flex;
+  gap: 6px;
+
+  background: #1b1b1b;
+
+  padding: 8px 10px;
+
+  border-radius: 20px;
+
+  box-shadow: 0 4px 12px rgba(0,0,0,.3);
+
+  z-index: 999;
+}
+
+
+.received-menu-wrapper{
+  position:relative;
+}
+
+
+.received-menu-wrapper .reaction-panel{
+  left:40px;
+  right:auto;
+}

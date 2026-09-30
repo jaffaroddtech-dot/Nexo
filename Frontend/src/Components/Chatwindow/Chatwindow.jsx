@@ -27,6 +27,7 @@ import {
   markAsSeen,
   deleteMessageForMe,
   deleteMessageForEveryone,
+  reactToMessage
 } from "../../../Apis/messages";
 
 const ChatWindow = ({ chatUser, onMessageSent }) => {
@@ -37,8 +38,9 @@ const ChatWindow = ({ chatUser, onMessageSent }) => {
   const [replyMessage, setReplyMessage] = useState(null);
   const [text, setText] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [openReactionId, setOpenReactionId] = useState(null);
   const [openMenuId, setOpenMenuId] = useState(null);
-
+  const emojis = ["❤️", "👍", "😂", "🔥", "😮", "😢"]
   const bottomRef = useRef(null);
   const typingTimeoutRef = useRef(null);
 
@@ -107,15 +109,23 @@ const ChatWindow = ({ chatUser, onMessageSent }) => {
         });
       }
     };
-    // USER TYPING
+    // TYPING
     const handleUserTyping = ({ senderId }) => {
-      if (senderId === chatUser._id) {
+      if (
+        String(senderId) ===
+        String(chatUser._id)
+      ) {
         setIsTyping(true);
       }
     };
-    // USER STOP TYPING
-    const handleUserStopTyping = ({ senderId }) => {
-      if (senderId === chatUser._id) {
+    // STOP TYPING
+    const handleUserStopTyping = ({
+      senderId,
+    }) => {
+      if (
+        String(senderId) ===
+        String(chatUser._id)
+      ) {
         setIsTyping(false);
       }
     };
@@ -148,12 +158,32 @@ const ChatWindow = ({ chatUser, onMessageSent }) => {
         )
       );
     };
+
+    // MESSAGES REACION
+    const handleReactionUpdate = ({
+      messageId,
+      reactions,
+    }) => {
+
+      setMessages((prev) =>
+        prev.map((msg) =>
+          String(msg._id) ===
+            String(messageId)
+            ? {
+              ...msg,
+              reactions,
+            }
+            : msg
+        )
+      );
+    };
     // REGISTER EVENTS
     socket.on("newMessage", handleNewMessage);
     socket.on("userTyping", handleUserTyping);
     socket.on("userStopTyping", handleUserStopTyping);
     socket.on("messagesSeenUpdate", handleMessagesSeen);
     socket.on("messageDeleted", handleMessageDeleted);
+    socket.on("messageReactionUpdate", handleReactionUpdate);
     // CLEANUP
     return () => {
       socket.off("newMessage", handleNewMessage);
@@ -161,6 +191,7 @@ const ChatWindow = ({ chatUser, onMessageSent }) => {
       socket.off("userStopTyping", handleUserStopTyping);
       socket.off("messagesSeenUpdate", handleMessagesSeen);
       socket.off("messageDeleted", handleMessageDeleted);
+      socket.off("messageReactionUpdate", handleReactionUpdate);
     };
   }, [socket, chatUser?._id, user?._id]);
   // AUTO SCROLL
@@ -295,6 +326,49 @@ const ChatWindow = ({ chatUser, onMessageSent }) => {
 
     setOpenMenuId(null);
   };
+
+  // HANDLE REACTION
+  const handleReaction = async (
+    msg,
+    emoji
+  ) => {
+    try {
+
+      const res = await reactToMessage(
+        msg._id,
+        emoji
+      );
+
+      if (res.status) {
+
+        setMessages((prev) =>
+          prev.map((m) =>
+            m._id === msg._id
+              ? res.message
+              : m
+          )
+        );
+
+        socket?.emit(
+          "messageReaction",
+          {
+            receiverId:
+              chatUser._id,
+            messageId:
+              msg._id,
+            reactions:
+              res.message.reactions,
+          }
+        );
+      }
+
+      setOpenReactionId(null);
+
+    } catch (err) {
+      console.log(err);
+    }
+  };
+
   // EMPTY CHAT
   if (!chatUser) {
     return (
@@ -347,7 +421,6 @@ const ChatWindow = ({ chatUser, onMessageSent }) => {
         {messages.map((msg, index) => {
           const isMine = msg.senderId === user._id;
 
-          // Find last message sent by me
           const isLastMineMessage =
             isMine &&
             index ===
@@ -358,7 +431,123 @@ const ChatWindow = ({ chatUser, onMessageSent }) => {
           if (isMine) {
             return (
               <div key={msg._id} className="sent-message-wrapper">
-                <div className="sent" onDoubleClick={() => setReplyMessage(msg)}>
+                <div className="sent-row">
+                  {/* Menu */}
+                  {!msg.isDeleted && (
+                    <div className="sent-menu-wrapper">
+                      <button
+                        className="reaction-btn"
+                        onClick={() =>
+                          setOpenReactionId(
+                            openReactionId === msg._id
+                              ? null
+                              : msg._id
+                          )
+                        }
+                      >
+                        <Smile size={14} />
+                      </button>
+                      {openReactionId === msg._id && (
+                        <div className="reaction-panel">
+                          {emojis.map((emoji) => (
+                            <button
+                              key={emoji}
+                              onClick={() =>
+                                handleReaction(msg, emoji)
+                              }
+                            >
+                              {emoji}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                      <button
+                        className="sent-menu-btn"
+                        onClick={() =>
+                          setOpenMenuId(
+                            openMenuId === msg._id ? null : msg._id
+                          )
+                        }
+                      >
+                        <Ellipsis size={14} />
+                      </button>
+
+                      {openMenuId === msg._id && (
+                        <div className="sent-menu-dropdown">
+                          <button
+                            onClick={() =>
+                              handleDeleteForEveryone(msg._id)
+                            }
+                          >
+                            Delete for Everyone
+                          </button>
+                          <button
+                            onClick={() => {
+                              setReplyMessage(msg);
+                              setOpenMenuId(null);
+                            }}
+                          >
+                            Reply
+                          </button>
+                          <button
+                            onClick={() => handleDeleteForMe(msg._id)}
+                          >
+                            Delete for Me
+                          </button>
+                        </div>
+                      )}
+
+                    </div>
+                  )}
+                  <div className="sent" onDoubleClick={() => setReplyMessage(msg)}>
+                    {msg.replyTo && (
+                      <div className="reply-inside-message">
+                        {msg.replyTo.text}
+                      </div>
+                    )}
+                    {msg.isDeleted ? (
+                      <span className="deleted-msg">
+                        🚫 This message was deleted
+                      </span>
+                    ) : (
+                      msg.text
+                    )}
+
+                    {/* Seen / Delivered */}
+                    {isLastMineMessage && !msg.isDeleted && (
+                      <span
+                        className={`seen-status ${msg.seen ? "seen" : "delivered"
+                          }`}
+                      >
+                        <CheckCheck size={15} />
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {msg.reactions?.length > 0 && (
+                  <div className="reaction-display">
+                    {msg.reactions.map(
+                      (reaction, index) => (
+                        <span
+                          key={index}
+                          className="reaction-item"
+                        >
+                          {reaction.emoji}
+                        </span>
+                      )
+                    )}
+                  </div>
+                )}
+
+              </div>
+            );
+          }
+          return (
+            <div key={msg._id} className="received-message-wrapper">
+              {/* Menu */}
+              <div className="received-row">
+                <div className="received" onDoubleClick={() => setReplyMessage(msg)}>
                   {msg.replyTo && (
                     <div className="reply-inside-message">
                       {msg.replyTo.text}
@@ -371,23 +560,11 @@ const ChatWindow = ({ chatUser, onMessageSent }) => {
                   ) : (
                     msg.text
                   )}
-
-                  {/* Seen / Delivered */}
-                  {isLastMineMessage && !msg.isDeleted && (
-                    <span
-                      className={`seen-status ${msg.seen ? "seen" : "delivered"
-                        }`}
-                    >
-                      <CheckCheck size={15} />
-                    </span>
-                  )}
                 </div>
-
-                {/* Menu */}
                 {!msg.isDeleted && (
-                  <div className="sent-menu-wrapper">
+                  <div className="received-menu-wrapper">
                     <button
-                      className="sent-menu-btn"
+                      className="received-menu-btn"
                       onClick={() =>
                         setOpenMenuId(
                           openMenuId === msg._id ? null : msg._id
@@ -396,15 +573,39 @@ const ChatWindow = ({ chatUser, onMessageSent }) => {
                     >
                       <Ellipsis size={14} />
                     </button>
+                    <button
+                      className="reaction-btn"
+                      onClick={() =>
+                        setOpenReactionId(
+                          openReactionId === msg._id
+                            ? null
+                            : msg._id
+                        )
+                      }
+                    >
+                      <Smile size={14} />
+                    </button>
+                    {openReactionId === msg._id && (
+                      <div className="reaction-panel">
+                        {emojis.map((emoji) => (
+                          <button
+                            key={emoji}
+                            onClick={() =>
+                              handleReaction(msg, emoji)
+                            }
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    )}
 
                     {openMenuId === msg._id && (
-                      <div className="sent-menu-dropdown">
+                      <div className="received-menu-dropdown">
                         <button
-                          onClick={() =>
-                            handleDeleteForEveryone(msg._id)
-                          }
+                          onClick={() => handleDeleteForMe(msg._id)}
                         >
-                          Delete for Everyone
+                          Delete for Me
                         </button>
                         <button
                           onClick={() => {
@@ -414,68 +615,29 @@ const ChatWindow = ({ chatUser, onMessageSent }) => {
                         >
                           Reply
                         </button>
-                        <button
-                          onClick={() => handleDeleteForMe(msg._id)}
-                        >
-                          Delete for Me
-                        </button>
                       </div>
                     )}
                   </div>
                 )}
-              </div>
-            );
-          }
-          return (
-            <div key={msg._id} className="received-message-wrapper">
-              {/* Menu */}
-              {!msg.isDeleted && (
-                <div className="received-menu-wrapper">
-                  <button
-                    className="received-menu-btn"
-                    onClick={() =>
-                      setOpenMenuId(
-                        openMenuId === msg._id ? null : msg._id
-                      )
-                    }
-                  >
-                    <Ellipsis size={14} />
-                  </button>
 
-                  {openMenuId === msg._id && (
-                    <div className="received-menu-dropdown">
-                      <button
-                        onClick={() => handleDeleteForMe(msg._id)}
+
+              </div>
+              {msg.reactions?.length > 0 && (
+                <div className="reaction-display">
+                  {msg.reactions.map(
+                    (reaction, index) => (
+                      <span
+                        key={index}
+                        className="reaction-item"
                       >
-                        Delete for Me
-                      </button>
-                      <button
-                        onClick={() => {
-                          setReplyMessage(msg);
-                          setOpenMenuId(null);
-                        }}
-                      >
-                        Reply
-                      </button>
-                    </div>
+                        {reaction.emoji}
+                      </span>
+                    )
                   )}
                 </div>
               )}
 
-              <div className="received" onDoubleClick={() => setReplyMessage(msg)}>
-                {msg.replyTo && (
-                  <div className="reply-inside-message">
-                    {msg.replyTo.text}
-                  </div>
-                )}
-                {msg.isDeleted ? (
-                  <span className="deleted-msg">
-                    🚫 This message was deleted
-                  </span>
-                ) : (
-                  msg.text
-                )}
-              </div>
+
             </div>
           );
         })}

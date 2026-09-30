@@ -118,7 +118,6 @@ const ContactWindow = ({ contactId, onDeleted }) => {
               />
             </div>
           )}
-          <span>{contact.contactUser.online ? "Online" : "Offline"}</span>
         </div>
 
         <div className="divider"></div>
@@ -136,7 +135,13 @@ const ContactWindow = ({ contactId, onDeleted }) => {
             {/* Action Icons */}
             <div className="action-icons">
               <Phone size={20} />
-              <MessageCircle size={20} />
+              <MessageCircle size={20} onClick={() =>
+                navigate("/", {
+                  state: {
+                    chatUser: contact.contactUser,
+                  },
+                })
+              } />
             </div>
           </div>
 
