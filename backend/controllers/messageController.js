@@ -14,13 +14,18 @@ exports.sendMessage = async (req, res) => {
 
         const newMessage = await Message.create({ senderId, receiverId, text, replyTo });
 
+
+        const populatedMessage = await Message
+            .findById(newMessage._id)
+            .populate("replyTo", "text senderId");
+
         // Realtime emit — agar receiver online hai
         const receiverSocketId = getReceiverSocketId(receiverId);
         if (receiverSocketId) {
-            getIO().to(receiverSocketId).emit("newMessage", newMessage);
+            getIO().to(receiverSocketId).emit("newMessage", populatedMessage);
         }
 
-        return res.status(201).json({ status: true, message: newMessage });
+        return res.status(201).json({ status: true, message: populatedMessage });
     } catch (error) {
         console.error("Send message error:", error);
         return res.status(500).json({ status: false, message: "Server error" });
@@ -42,8 +47,8 @@ exports.getMessages = async (req, res) => {
                 $nin: [myId],
             },
         })
-        .populate("replyTo", "text senderId")
-        .sort({ createdAt: 1 });
+            .populate("replyTo", "text senderId")
+            .sort({ createdAt: 1 });
 
         return res.status(200).json({ status: true, messages });
     } catch (error) {
@@ -215,5 +220,51 @@ exports.deleteForEveryone = async (req, res) => {
     } catch (error) {
         console.error("Delete for everyone error:", error);
         return res.status(500).json({ status: false, message: "Server error" });
+    }
+};
+
+
+exports.reactToMessage = async( req, res ) => {
+    try {
+        const { messageId } = req.params;
+        const { emoji } = req.body;
+        const userId = req.user._id;
+
+        const message = await Message.findById(messageId);
+
+        if (!message) {
+            return res.status(404).json({
+                status: false,
+                message : "Message not found"
+            });
+        }
+
+        const existingReactionIndex = message.reactions.findIndex((reaction)=>string(reaction.userId)===(string(userId)));
+
+        if (existingReactionIndex !== -1){
+            message.reactions[
+                existingReactionIndex
+            ].emoji = emoji;
+        } else {
+            message.reactions.push({
+                userId,
+                emoji
+            });
+        }
+
+        await message.save();
+
+        return res.json({
+            status:true,
+            message,
+        });
+
+    } catch (error) {
+        console.log(error);
+
+        return res.status(500).json({
+            status:false,
+            message:"server error"
+        });
     }
 };

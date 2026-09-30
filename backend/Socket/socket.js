@@ -102,6 +102,18 @@ const initSocket = (server) => {
       }
     });
 
+
+    socket.on("messageReaction",({
+      receiverId,
+      messageId,
+      reactions,
+    })=>{
+      const receiverSocketId = onlineUsers.get(receiverId?.toString());
+      if (receiverSocketId){
+        io.to(receiverSocketId).emit("messageReactionUpdate",{messageId,reactions,});
+      }
+    });
+
     socket.on("disconnect", async () => {
       console.log("🔴 Disconnected:", socket.userId);
       onlineUsers.delete(socket.userId);

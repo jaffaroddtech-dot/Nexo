@@ -20,19 +20,30 @@ const messageSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    isDeleted: { 
-      type: Boolean, 
-      default: false 
+    isDeleted: {
+      type: Boolean,
+      default: false
     },
-    deletedFor: [{ 
-      type: mongoose.Schema.Types.ObjectId, 
-      ref: "User" 
+    deletedFor: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
     }],
-    replyTo : {
+    replyTo: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Message',
-      default : null,
-    }
+      default: null,
+    },
+    reactions: [
+      {
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        emoji: {
+          type: String,
+        },
+      },
+    ],
   },
   { timestamps: true }
 );
