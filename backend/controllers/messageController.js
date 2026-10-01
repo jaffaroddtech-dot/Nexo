@@ -17,7 +17,7 @@ exports.sendMessage = async (req, res) => {
 
         const populatedMessage = await Message
             .findById(newMessage._id)
-            .populate("replyTo", "text senderId");
+            .populate("replyTo", "text senderId isDeleted");
 
         // Realtime emit — agar receiver online hai
         const receiverSocketId = getReceiverSocketId(receiverId);
@@ -47,7 +47,7 @@ exports.getMessages = async (req, res) => {
                 $nin: [myId],
             },
         })
-            .populate("replyTo", "text senderId")
+            .populate("replyTo", "text senderId isDeleted")
             .sort({ createdAt: 1 });
 
         return res.status(200).json({ status: true, messages });
@@ -208,7 +208,6 @@ exports.deleteForEveryone = async (req, res) => {
         }
 
         message.isDeleted = true;
-        message.text = "";
         await message.save();
 
         const receiverSocketId = getReceiverSocketId(message.receiverId);
@@ -224,7 +223,7 @@ exports.deleteForEveryone = async (req, res) => {
 };
 
 
-exports.reactToMessage = async( req, res ) => {
+exports.reactToMessage = async (req, res) => {
     try {
         const { messageId } = req.params;
         const { emoji } = req.body;
@@ -235,13 +234,13 @@ exports.reactToMessage = async( req, res ) => {
         if (!message) {
             return res.status(404).json({
                 status: false,
-                message : "Message not found"
+                message: "Message not found"
             });
         }
 
-        const existingReactionIndex = message.reactions.findIndex((reaction)=>string(reaction.userId)===(string(userId)));
+        const existingReactionIndex = message.reactions.findIndex((reaction) => String(reaction.userId) === (String(userId)));
 
-        if (existingReactionIndex !== -1){
+        if (existingReactionIndex !== -1) {
             message.reactions[
                 existingReactionIndex
             ].emoji = emoji;
@@ -253,18 +252,25 @@ exports.reactToMessage = async( req, res ) => {
         }
 
         await message.save();
+        const populatedMessage =
+            await Message.findById(
+                message._id
+            ).populate(
+                "replyTo",
+                "text senderId isDeleted"
+            );
 
         return res.json({
-            status:true,
-            message,
+            status: true,
+            message: populatedMessage,
         });
 
     } catch (error) {
         console.log(error);
 
         return res.status(500).json({
-            status:false,
-            message:"server error"
+            status: false,
+            message: "server error"
         });
     }
 };
