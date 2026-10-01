@@ -59,46 +59,42 @@
 /* =========================
    MESSAGE WRAPPERS
 ========================= */
-/* 
-.sent-message-wrapper {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
-  margin-bottom: 15px;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-} */
-
 
 .sent-message-wrapper {
   width: fit-content;
   margin-left: auto;
-
   position: relative;
-
   display: flex;
   flex-direction: column;
   align-items: flex-end;
-
   margin-bottom: 15px;
 }
 
 .received-message-wrapper {
   display: flex;
-  justify-content: flex-start;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
+  align-items: flex-start;
   width: 100%;
   margin-bottom: 15px;
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+}
 
+/* position: relative here = popups anchor to the bubble row */
+.sent-row,
+.received-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+}
+
+.sent-row {
+  justify-content: flex-end;
+}
+
+.received-row {
+  justify-content: flex-start;
 }
 
 
@@ -126,143 +122,302 @@
 
 
 /* =========================
-   MESSAGE MENU - SENDER
+   HOVER ICON BUTTONS
+   (smile + three dots)
 ========================= */
 
-.sent-menu-wrapper {
+.sent-menu-wrapper,
+.received-menu-wrapper {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 2px;
+}
 
+.sent-menu-wrapper {
   margin-right: 5px;
 }
 
-.sent-menu-btn {
-  background: none;
+.received-menu-wrapper {
+  margin-left: 5px;
+}
+
+.reaction-btn,
+.sent-menu-btn,
+.received-menu-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 28px;
+  height: 28px;
+  padding: 0;
+
   border: none;
+  border-radius: 50%;
+  background: none;
+  color: #9a97c4;
   cursor: pointer;
-  padding: 3px;
-  color: #fff;
 
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
 
-  transition: opacity 0.15s ease;
+  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
 
-.sent-message-wrapper:hover .sent-menu-btn {
-  opacity: 0.7;
+.reaction-btn svg,
+.sent-menu-btn svg,
+.received-menu-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* show on hover, and keep visible while its popup is open */
+.sent-message-wrapper:hover .reaction-btn,
+.sent-message-wrapper:hover .sent-menu-btn,
+.received-message-wrapper:hover .reaction-btn,
+.received-message-wrapper:hover .received-menu-btn,
+.sent-menu-wrapper:has(.reaction-panel) .reaction-btn,
+.sent-menu-wrapper:has(.sent-menu-dropdown) .sent-menu-btn,
+.received-menu-wrapper:has(.reaction-panel) .reaction-btn,
+.received-menu-wrapper:has(.received-menu-dropdown) .received-menu-btn {
+  opacity: 1;
   visibility: visible;
   pointer-events: auto;
 }
 
-.sent-menu-btn:hover {
-  opacity: 1;
+.reaction-btn:hover,
+.sent-menu-btn:hover,
+.received-menu-btn:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #c9bdff;
 }
 
-.sent-menu-dropdown {
-  position: absolute;
-  top: 25px;
-  right: 0;
-
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-
-  z-index: 10;
-
-  display: flex;
-  flex-direction: column;
-
-  min-width: 160px;
-}
-
-.sent-menu-dropdown button {
-  background: none;
-  border: none;
-  text-align: left;
-
-  padding: 8px 12px;
-
-  font-size: 13px;
-  cursor: pointer;
-}
-
-.sent-menu-dropdown button:hover {
-  background: #f2f2f2;
+.sent-menu-wrapper:has(.reaction-panel) .reaction-btn,
+.sent-menu-wrapper:has(.sent-menu-dropdown) .sent-menu-btn,
+.received-menu-wrapper:has(.reaction-panel) .reaction-btn,
+.received-menu-wrapper:has(.received-menu-dropdown) .received-menu-btn {
+  background: rgba(119, 88, 249, 0.22);
+  color: #c9bdff;
 }
 
 
 /* =========================
-   MESSAGE MENU - RECEIVER
+   POPUPS (menu + reactions)
+   same dark card style
 ========================= */
-.received-menu-wrapper {
-  display: flex;
-  align-items: center;
-  gap: 6px;
 
-  margin-left: 5px;
-}
-
-.received-menu-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 3px;
-  color: #fff;
-
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-
-  transition: opacity 0.15s ease;
-}
-
-.received-message-wrapper:hover .received-menu-btn {
-  opacity: 0.7;
-  visibility: visible;
-  pointer-events: auto;
-}
-
-.received-menu-btn:hover {
-  opacity: 1;
-}
-
-.received-menu-dropdown {
+.sent-menu-dropdown,
+.received-menu-dropdown,
+.reaction-panel {
   position: absolute;
-  top: 25px;
-  left: 0;
+  z-index: 50;
 
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  background: #1e1e3a;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
 
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  animation: popupIn 0.12s ease-out;
+}
 
-  z-index: 10;
+@keyframes popupIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---- menu: below the bubble ---- */
+
+.sent-menu-dropdown,
+.received-menu-dropdown {
+  top: calc(100% + 6px);
 
   display: flex;
   flex-direction: column;
 
-  min-width: 160px;
+  min-width: 200px;
+  padding: 6px;
+  border-radius: 14px;
 }
 
+.sent-menu-dropdown {
+  right: 0;
+}
+
+.received-menu-dropdown {
+  left: 0;
+}
+
+.sent-menu-dropdown button,
 .received-menu-dropdown button {
-  background: none;
+  position: relative;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  padding: 9px 12px;
+
   border: none;
+  border-radius: 9px;
+  background: none;
+
+  font-size: 14px;
   text-align: left;
-
-  padding: 8px 12px;
-
-  font-size: 13px;
+  white-space: nowrap;
+  color: #e6e3ff;
   cursor: pointer;
+
+  transition: background 0.12s ease;
 }
 
+.sent-menu-dropdown button:hover,
 .received-menu-dropdown button:hover {
-  background: #f2f2f2;
+  background: rgba(119, 88, 249, 0.2);
+}
+
+/* icons (drawn with CSS, no JSX change needed) */
+.sent-menu-dropdown button::before,
+.received-menu-dropdown button::before {
+  content: "";
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  background-color: #9a97c4;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+
+/* sent menu DOM order: 1 Delete for Everyone, 2 Reply, 3 Delete for Me
+   shown as: Reply, Delete for Me, ---, Delete for Everyone */
+.sent-menu-dropdown button:nth-child(2) {
+  order: 1;
+}
+
+.sent-menu-dropdown button:nth-child(3) {
+  order: 2;
+}
+
+.sent-menu-dropdown button:nth-child(1) {
+  order: 3;
+  margin-top: 9px;
+  color: #ff7a90;
+}
+
+.sent-menu-dropdown button:nth-child(1):hover {
+  background: rgba(255, 122, 144, 0.14);
+}
+
+.sent-menu-dropdown button:nth-child(1)::after {
+  content: "";
+  position: absolute;
+  top: -5px;
+  left: 6px;
+  right: 6px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.sent-menu-dropdown button:nth-child(1)::before {
+  background-color: #ff7a90;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6h18'/%3E%3Cpath d='M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6'/%3E%3Cpath d='M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2'/%3E%3Cline x1='10' x2='10' y1='11' y2='17'/%3E%3Cline x1='14' x2='14' y1='11' y2='17'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6h18'/%3E%3Cpath d='M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6'/%3E%3Cpath d='M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2'/%3E%3Cline x1='10' x2='10' y1='11' y2='17'/%3E%3Cline x1='14' x2='14' y1='11' y2='17'/%3E%3C/svg%3E");
+}
+
+.sent-menu-dropdown button:nth-child(2)::before,
+.received-menu-dropdown button:nth-child(2)::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='9 14 4 9 9 4'/%3E%3Cpath d='M20 20v-7a4 4 0 0 0-4-4H4'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='9 14 4 9 9 4'/%3E%3Cpath d='M20 20v-7a4 4 0 0 0-4-4H4'/%3E%3C/svg%3E");
+}
+
+.sent-menu-dropdown button:nth-child(3)::before,
+.received-menu-dropdown button:nth-child(1)::before {
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6h18'/%3E%3Cpath d='M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6'/%3E%3Cpath d='M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2'/%3E%3C/svg%3E");
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 6h18'/%3E%3Cpath d='M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6'/%3E%3Cpath d='M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2'/%3E%3C/svg%3E");
+}
+
+/* received menu DOM order: 1 Delete for Me, 2 Reply
+   shown as: Reply, Delete for Me */
+.received-menu-dropdown button:nth-child(2) {
+  order: 1;
+}
+
+.received-menu-dropdown button:nth-child(1) {
+  order: 2;
+}
+
+/* ---- reactions: above the bubble ---- */
+
+.reaction-panel {
+  bottom: calc(100% + 6px);
+
+  display: flex;
+  gap: 2px;
+
+  padding: 5px 8px;
+  border-radius: 999px;
+  height: 45px;
+}
+
+.sent-row .reaction-panel {
+  right: 0;
+}
+
+.received-row .reaction-panel {
+  left: 0;
+}
+
+.reaction-panel button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 34px;
+  height: 34px;
+
+  border: none;
+  border-radius: 50%;
+  background: none;
+
+  font-size: 20px;
+  cursor: pointer;
+
+  transition: transform 0.12s ease, background 0.12s ease;
+}
+
+.reaction-panel button:hover {
+  background: rgba(119, 88, 249, 0.28);
+  transform: scale(1.15);
+}
+
+
+/* =========================
+   REACTIONS UNDER MESSAGE
+========================= */
+
+.reaction-display {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.reaction-item {
+  background: #1e1e3a;
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  padding: 2px 6px;
+  border-radius: 12px;
+  position: relative;
+  bottom: 5px;
 }
 
 
@@ -298,22 +453,6 @@
 .deleted-msg {
   font-style: italic;
   opacity: 0.6;
-}
-
-.sent-row {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 6px;
-  width: fit-content;
-}
-
-.received-row {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 6px;
-  width: fit-content;
 }
 
 
@@ -455,6 +594,59 @@
 
 
 /* =========================
+   REPLY
+========================= */
+
+.reply-preview {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 10px;
+  margin-bottom: 10px;
+
+  background: #1f1f1f;
+  border-left: 4px solid #7758f9;
+  border-radius: 8px;
+}
+
+.reply-title {
+  color: #7758f9;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.reply-preview-text {
+  margin: 0;
+  color: white;
+  font-size: 13px;
+}
+
+.reply-close {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+}
+
+.reply-inside-message {
+  background: rgba(255, 255, 255, .1);
+
+  padding: 6px 8px;
+  margin-bottom: 6px;
+
+  border-radius: 6px;
+
+  font-size: 12px;
+  opacity: .9;
+
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+/* =========================
    EMPTY CHAT
 ========================= */
 
@@ -510,7 +702,6 @@
   background: #6747d8;
 }
 
-
 /* Firefox */
 
 .chat-body {
@@ -519,122 +710,109 @@
 }
 
 
+/* =========================
+   TOUCH DEVICES (no hover)
+   buttons always visible
+========================= */
 
+@media (hover: none) {
 
-.reply-preview {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  .reaction-btn,
+  .sent-menu-btn,
+  .received-menu-btn {
+    opacity: 0.75;
+    visibility: visible;
+    pointer-events: auto;
 
-  padding: 10px;
-  margin-bottom: 10px;
-
-  background: #1f1f1f;
-  border-left: 4px solid #7758f9;
-  border-radius: 8px;
-}
-
-.reply-title {
-  color: #7758f9;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.reply-preview-text {
-  margin: 0;
-  color: white;
-  font-size: 13px;
-}
-
-.reply-close {
-  background: none;
-  border: none;
-  color: white;
-  cursor: pointer;
+    width: 30px;
+    height: 30px;
+  }
 }
 
 
-.reply-inside-message {
-  background: rgba(255, 255, 255, .1);
+/* =========================
+   MOBILE / SMALL SCREENS
+   popups become bottom sheets
+   (never clipped by the chat area)
+========================= */
 
-  padding: 6px 8px;
-  margin-bottom: 6px;
+@keyframes sheetIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
 
-  border-radius: 6px;
-
-  font-size: 12px;
-  opacity: .9;
-
-  max-width: 220px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
-.reply-inside-message span {
-  border-left: 3px solid #7758f9;
-}
+@media (max-width: 768px) {
 
+  /* bubbles never overflow the screen */
+  .sent-message-wrapper {
+    max-width: 90%;
+  }
 
+  .received-row {
+    max-width: 90%;
+  }
 
-.reaction-btn {
-  border: none;
-  background: none;
-  color: white;
-}
+  .sent,
+  .received {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    touch-action: manipulation;
+  }
 
-.reaction-panel {
-  position: absolute;
+  /* popups -> fixed bottom sheet */
+  .chat-window .sent-menu-dropdown,
+  .chat-window .received-menu-dropdown,
+  .chat-window .sent-row .reaction-panel,
+  .chat-window .received-row .reaction-panel {
+    position: fixed;
+    top: auto;
+    left: 12px;
+    right: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    z-index: 1000;
 
-  display: flex;
-  gap: 6px;
+    animation: sheetIn 0.15s ease-out;
+  }
 
-  background: #232323;
+  /* menu sheet */
+  .chat-window .sent-menu-dropdown,
+  .chat-window .received-menu-dropdown {
+    min-width: 0;
+    padding: 8px;
+    border-radius: 16px;
+  }
 
-  padding: 8px 12px;
+  .sent-menu-dropdown button,
+  .received-menu-dropdown button {
+    padding: 14px 16px;
+    font-size: 16px;
+  }
 
-  border-radius: 20px;
+  .sent-menu-dropdown button::before,
+  .received-menu-dropdown button::before {
+    width: 20px;
+    height: 20px;
+  }
 
-  z-index: 999;
-}
+  /* reaction sheet */
+  .chat-window .sent-row .reaction-panel,
+  .chat-window .received-row .reaction-panel {
+    height: auto;
+    justify-content: space-around;
+    padding: 10px 8px;
+    border-radius: 20px;
+  }
 
-.reaction-panel button {
-  border: none;
-  background: none;
-  font-size: 18px;
-  cursor: pointer;
-}
-
-.reaction-display {
-  display: flex;
-  gap: 4px;
-
-  margin-top: 4px;
-}
-
-.reaction-item {
-  background: #2d2d2d;
-  padding: 2px 6px;
-  border-radius: 12px;
-}
-
-.reaction-btn {
-  opacity: 0;
-  transition: .2s;
-}
-
-.sent-message-wrapper:hover .reaction-btn {
-  opacity: 1;
-}
-
-.received-message-wrapper:hover .reaction-btn {
-  opacity: 1;
-}
-
-
-.reaction-btn,
-.sent-menu-btn,
-.received-menu-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  .reaction-panel button {
+    width: 46px;
+    height: 46px;
+    font-size: 26px;
+  }
 }
