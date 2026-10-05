@@ -8,8 +8,11 @@
 .chat-window {
   width: 100%;
   height: 100vh;
+  height: 100dvh;           /* real visible height on mobile browsers */
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
 }
 
 
@@ -18,6 +21,7 @@
 ========================= */
 
 .chat-header {
+  flex-shrink: 0;
   height: 70px;
   background: #1a1c3e;
   display: flex;
@@ -26,12 +30,21 @@
   padding: 0 20px;
   border-bottom: 1px solid #2a2d4a;
   color: #fff;
+  min-width: 0;
+}
+
+/* lets long names truncate instead of pushing the layout */
+.chat-header > * {
+  min-width: 0;
 }
 
 .username {
   font-size: 16px;
   font-weight: 600;
   color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .online-indicator {
@@ -46,13 +59,16 @@
 
 .chat-body {
   flex: 1;
+  min-height: 0;            /* required so flex child can scroll */
   overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
   padding: 20px;
   background: radial-gradient(circle at 30% 20%,
       #1a1c3e 0%,
       #0f1024 60%,
       #0b0c1e 100%);
-  overflow-x: hidden;
 }
 
 
@@ -62,6 +78,7 @@
 
 .sent-message-wrapper {
   width: fit-content;
+  max-width: 75%;
   margin-left: auto;
   position: relative;
   display: flex;
@@ -87,6 +104,12 @@
   align-items: center;
   gap: 6px;
   width: fit-content;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.received-row {
+  max-width: 75%;
 }
 
 .sent-row {
@@ -102,22 +125,46 @@
    MESSAGE BUBBLES
 ========================= */
 
-.sent {
+.sent,
+.received {
   position: relative;
-  background: #7758f9;
-  color: #fff;
-  width: fit-content;
+  min-width: 96px;
+  max-width: 100%;
+  flex: 0 1 auto;
   padding: 12px;
+  padding-bottom: 28px;
+  color: #fff;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, 0.08),
+    0 10px 24px rgba(0, 0, 0, .25);
+}
+
+.sent {
+  background: linear-gradient(135deg, #6144f4 0%, #4632d5 100%);
   border-radius: 12px 12px 0 12px;
 }
 
 .received {
-  position: relative;
-  background: #2a2d4a;
-  color: #fff;
+  background:
+    linear-gradient(135deg,
+      rgba(49, 50, 83, 0.96),
+      rgba(38, 39, 67, 0.96));
   width: fit-content;
-  padding: 12px;
   border-radius: 12px 12px 12px 0;
+}
+
+/* images / media inside a bubble never overflow it */
+.sent img,
+.received img,
+.sent video,
+.received video {
+  max-width: 100%;
+  height: auto;
+  display: block;
 }
 
 
@@ -131,6 +178,7 @@
   display: flex;
   align-items: center;
   gap: 2px;
+  flex-shrink: 0;
 }
 
 .sent-menu-wrapper {
@@ -224,6 +272,18 @@
   from {
     opacity: 0;
     transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sheetIn {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
   }
 
   to {
@@ -407,6 +467,7 @@
 
 .reaction-display {
   display: flex;
+  flex-wrap: wrap;
   gap: 4px;
   margin-top: 4px;
 }
@@ -508,7 +569,8 @@
 ========================= */
 
 .message-box {
-  width: 100%;
+  flex-shrink: 0;
+  width: calc(100% - 32px);
   max-width: 700px;
 
   background: #1a1c3e;
@@ -545,6 +607,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 10px;
 }
 
 .left-icons {
@@ -601,6 +664,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 10px;
 
   padding: 10px;
   margin-bottom: 10px;
@@ -610,19 +674,29 @@
   border-radius: 8px;
 }
 
+/* lets the preview text truncate with an ellipsis */
+.reply-preview > div {
+  min-width: 0;
+}
+
 .reply-title {
   color: #7758f9;
   font-size: 12px;
   font-weight: 600;
 }
 
-.reply-preview-text {
-  margin: 0;
-  color: white;
-  font-size: 13px;
+.reply-text {
+  font-size: 14px;
+
+  color: rgba(255, 255, 255, 0.75);
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .reply-close {
+  flex-shrink: 0;
   background: none;
   border: none;
   color: white;
@@ -630,19 +704,75 @@
 }
 
 .reply-inside-message {
-  background: rgba(255, 255, 255, .1);
+  position: relative;
+  min-width: min(120px, 100%);
+  max-width: min(480px, 100%);
+  background: rgb(0 0 0 / 14%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
 
+  border-radius: 12px;
   padding: 6px 8px;
-  margin-bottom: 6px;
+  margin-bottom: 10px;
 
-  border-radius: 6px;
-
-  font-size: 12px;
-  opacity: .9;
-
-  max-width: 220px;
   overflow: hidden;
-  text-overflow: ellipsis;
+}
+
+.reply-inside-message::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0px;
+  bottom: 0px;
+  width: 4px;
+  border-radius: 10px;
+  background: #b88cff;
+}
+
+.reply-preview-text {
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.reply-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: #6747d8;
+  margin-bottom: 2px;
+}
+
+.received .reply-inside-message::before {
+  background: #50e3c2;
+}
+
+.received .reply-name {
+  color: #50e3c2;
+}
+
+.sent .reply-inside-message::before {
+  background: #d59fff;
+}
+
+.sent .reply-name {
+  color: #d59fff;
+}
+
+
+/* =========================
+   TIME + TICKS
+========================= */
+
+.message-meta {
+  position: absolute;
+  right: 10px;
+  bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.message-time-chat {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.7);
 }
 
 
@@ -653,6 +783,7 @@
 .empty-chat {
   width: 100%;
   height: 100vh;
+  height: 100dvh;
 
   display: flex;
   flex-direction: column;
@@ -660,14 +791,18 @@
   justify-content: center;
   align-items: center;
 
+  padding: 20px;
+  text-align: center;
+
   color: #fff;
 }
 
 .chat-logo {
   background-image: url('../../assets/chat.png');
 
-  height: 300px;
-  width: 300px;
+  width: min(300px, 70vw);
+  height: auto;
+  aspect-ratio: 1 / 1;
 
   background-position: center;
   background-repeat: no-repeat;
@@ -710,10 +845,26 @@
 }
 
 
-/* =========================
-   TOUCH DEVICES (no hover)
-   buttons always visible
-========================= */
+/* ==========================================================
+   RESPONSIVE
+   (keep everything below at the END of the file so these
+   rules win over the base styles above)
+========================================================== */
+
+
+/* ---------- Tablets & small laptops ---------- */
+
+@media (max-width: 1024px) {
+
+  .sent-message-wrapper,
+  .received-row {
+    max-width: 82%;
+  }
+}
+
+
+/* ---------- Touch devices (no hover) ----------
+   action buttons always visible, bigger tap targets */
 
 @media (hover: none) {
 
@@ -730,43 +881,14 @@
 }
 
 
-/* =========================
-   MOBILE / SMALL SCREENS
-   popups become bottom sheets
-   (never clipped by the chat area)
-========================= */
+/* ---------- Bottom-sheet popups ----------
+   phones AND touch tablets: popups are never clipped
+   by the scrolling chat area and get big tap targets */
 
-@keyframes sheetIn {
-  from {
-    opacity: 0;
-    transform: translateY(16px);
-  }
+@media (max-width: 768px),
+(hover: none) and (pointer: coarse) {
 
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@media (max-width: 768px) {
-
-  /* bubbles never overflow the screen */
-  .sent-message-wrapper {
-    max-width: 90%;
-  }
-
-  .received-row {
-    max-width: 90%;
-  }
-
-  .sent,
-  .received {
-    min-width: 0;
-    overflow-wrap: anywhere;
-    touch-action: manipulation;
-  }
-
-  /* popups -> fixed bottom sheet */
+  /* popups -> fixed bottom sheet with dimmed backdrop */
   .chat-window .sent-menu-dropdown,
   .chat-window .received-menu-dropdown,
   .chat-window .sent-row .reaction-panel,
@@ -777,6 +899,14 @@
     right: 12px;
     bottom: calc(12px + env(safe-area-inset-bottom, 0px));
     z-index: 1000;
+
+    width: auto;
+    max-width: 480px;
+    margin: 0 auto;
+
+    box-shadow:
+      0 -8px 30px rgba(0, 0, 0, 0.5),
+      0 0 0 100vmax rgba(0, 0, 0, 0.45);
 
     animation: sheetIn 0.15s ease-out;
   }
@@ -805,6 +935,7 @@
   .chat-window .sent-row .reaction-panel,
   .chat-window .received-row .reaction-panel {
     height: auto;
+    flex-wrap: wrap;
     justify-content: space-around;
     padding: 10px 8px;
     border-radius: 20px;
@@ -814,5 +945,136 @@
     width: 46px;
     height: 46px;
     font-size: 26px;
+  }
+}
+
+
+/* ---------- Phones ---------- */
+
+@media (max-width: 768px) {
+
+  .chat-header {
+    height: 60px;
+    gap: 10px;
+    padding: 0 12px;
+  }
+
+  .username {
+    font-size: 15px;
+  }
+
+  .chat-body {
+    padding: 12px;
+  }
+
+  /* bubbles use almost the full width */
+  .sent-message-wrapper,
+  .received-row {
+    max-width: 90%;
+  }
+
+  .sent-message-wrapper,
+  .received-message-wrapper {
+    margin-bottom: 12px;
+  }
+
+  .sent,
+  .received {
+    min-width: 88px;
+    padding: 10px;
+    padding-bottom: 26px;
+    font-size: 15px;
+  }
+
+  .reply-inside-message {
+    max-width: 100%;
+  }
+
+  /* smaller action buttons so they don't eat bubble width */
+  .reaction-btn,
+  .sent-menu-btn,
+  .received-menu-btn {
+    width: 26px;
+    height: 26px;
+  }
+
+  .sent-menu-wrapper {
+    margin-right: 2px;
+  }
+
+  .received-menu-wrapper {
+    margin-left: 2px;
+  }
+
+  /* message box */
+  .message-box {
+    width: calc(100% - 20px);
+    padding: 10px 12px;
+    margin: 0 auto calc(10px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .message-input {
+    font-size: 16px;        /* 16px+ stops iOS zooming on focus */
+    margin-bottom: 10px;
+  }
+
+  .left-icons {
+    gap: 12px;
+  }
+
+  .send-btn {
+    padding: 8px 14px;
+  }
+
+  .reply-preview {
+    padding: 8px 10px;
+  }
+
+  .typing-indicator {
+    padding: 16px 12px;
+  }
+}
+
+
+/* ---------- Very small phones ---------- */
+
+@media (max-width: 380px) {
+
+  .chat-body {
+    padding: 10px;
+  }
+
+  .sent-message-wrapper,
+  .received-row {
+    max-width: 94%;
+  }
+
+  .send-btn {
+    padding: 8px 12px;
+  }
+
+  .reaction-panel button {
+    width: 40px;
+    height: 40px;
+    font-size: 22px;
+  }
+}
+
+
+/* ---------- Landscape phones (short screens) ---------- */
+
+@media (max-height: 500px) {
+
+  .chat-header {
+    height: 50px;
+  }
+
+  .message-box {
+    margin-bottom: 8px;
+    padding: 8px 12px;
+  }
+
+  .message-input {
+    margin-bottom: 8px;
   }
 }

@@ -1,7 +1,6 @@
 import React from "react";
 import "./Chatwindow.css";
-
-import useChatWindow from "./chatsComponents/Usechatwindow";
+import useChatWindow from "./chatsComponents/useChatwindow";
 import ChatHeader from "./chatsComponents/ChatHeader";
 import SentMessage from "./chatsComponents/SentMessage";
 import ReceivedMessage from "./chatsComponents/ReceivedMessage";
@@ -68,12 +67,14 @@ const ChatWindow = ({ chatUser, onMessageSent }) => {
             <SentMessage
               key={msg._id}
               msg={msg}
+              user={user}
+              chatUser={chatUser}
               isLastMine={index === lastMineIndex}
               onDeleteForEveryone={handleDeleteForEveryone}
               {...shared}
             />
           ) : (
-            <ReceivedMessage key={msg._id} msg={msg} {...shared} />
+            <ReceivedMessage key={msg._id} msg={msg} user={user} chatUser={chatUser} {...shared} />
           )
         )}
 

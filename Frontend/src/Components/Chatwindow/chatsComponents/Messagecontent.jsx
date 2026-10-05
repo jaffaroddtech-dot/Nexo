@@ -5,15 +5,37 @@ const DeletedText = () => (
 );
 
 // Reply quote (if any) + message text / deleted placeholder
-const MessageContent = ({ msg }) => (
-  <>
-    {msg.replyTo && (
-      <div className="reply-inside-message">
-        {msg.replyTo.isDeleted ? <DeletedText /> : msg.replyTo.text}
-      </div>
-    )}
-    {msg.isDeleted ? <DeletedText /> : msg.text}
-  </>
-);
+// 
 
+const MessageContent = ({ msg, user, chatUser }) => {
+  const replyName =
+    String(msg?.replyTo?.senderId) === String(user?._id)
+      ? "You"
+      : chatUser?.name;
+
+  return (
+    <>
+      {msg.replyTo && (
+        <div className="reply-inside-message">
+          <div className="reply-name">
+            {replyName}
+          </div>
+
+          <div className="reply-text">
+            {msg.replyTo.text}
+          </div>
+        </div>
+      )}
+
+      {msg.isDeleted ? (
+        <DeletedText />
+      ) : (
+        msg.text
+      )}
+    </>
+  );
+};
 export default MessageContent;
+
+
+

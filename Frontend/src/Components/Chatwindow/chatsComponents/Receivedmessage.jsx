@@ -3,6 +3,7 @@ import { Ellipsis } from "lucide-react";
 import MessageContent from "./MessageContent";
 import ReactionPicker from "./ReactionPicker";
 import ReactionDisplay from "./ReactionDisplay";
+import {formatTime}  from "../../../Helpers/Helper";
 
 const ReceivedMessage = ({
   msg,
@@ -13,11 +14,16 @@ const ReceivedMessage = ({
   onReact,
   onReply,
   onDeleteForMe,
+  user,
+  chatUser,
 }) => (
   <div className="received-message-wrapper">
     <div className="received-row">
       <div className="received" onDoubleClick={() => onReply(msg)}>
-        <MessageContent msg={msg} />
+        <MessageContent msg={msg} user={user} chatUser={chatUser} />
+        <div className="message-meta">
+          <span className="message-time-chat">{formatTime(msg.createdAt)}</span>
+        </div>
       </div>
 
       {!msg.isDeleted && (

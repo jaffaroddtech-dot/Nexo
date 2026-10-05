@@ -47,3 +47,12 @@ export const formatLastSeen = (date) => {
 
   return `Last seen ${lastSeen.toLocaleString()}`;
 };
+
+
+
+export const formatTime = (date) => {
+return new Date(date).toLocaleTimeString("en-PK", {
+hour: "numeric",
+minute: "2-digit",
+});
+};

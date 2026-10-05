@@ -3,9 +3,12 @@ import { CheckCheck, Ellipsis } from "lucide-react";
 import MessageContent from "./MessageContent";
 import ReactionPicker from "./ReactionPicker";
 import ReactionDisplay from "./ReactionDisplay";
+import  {formatTime}  from "../../../Helpers/Helper";
 
 const SentMessage = ({
   msg,
+  user,
+  chatUser,
   isLastMine,
   openReactionId,
   setOpenReactionId,
@@ -59,13 +62,17 @@ const SentMessage = ({
       )}
 
       <div className="sent" onDoubleClick={() => onReply(msg)}>
-        <MessageContent msg={msg} />
+        <MessageContent msg={msg} user={user} chatUser={chatUser} />
 
-        {isLastMine && !msg.isDeleted && (
-          <span className={`seen-status ${msg.seen ? "seen" : "delivered"}`}>
-            <CheckCheck size={15} />
-          </span>
-        )}
+        <div className="message-meta">
+          <span className="message-time-chat">{formatTime(msg.createdAt)}</span>
+
+          {isLastMine && !msg.isDeleted && (
+            <span className={`seen-status ${msg.seen ? "seen" : "delivered"}`}>
+              <CheckCheck size={15} />
+            </span>
+          )}
+        </div>
       </div>
     </div>
 
