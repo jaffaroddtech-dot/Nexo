@@ -6,7 +6,7 @@ import SentMessage from "./chatsComponents/SentMessage";
 import ReceivedMessage from "./chatsComponents/ReceivedMessage";
 import MessageInput from "./chatsComponents/MessageInput";
 
-const ChatWindow = ({ chatUser, onMessageSent }) => {
+const ChatWindow = ({ chatUser, onMessageSent, onBack }) => {
   const {
     user,
     onlineUsers,
@@ -59,6 +59,7 @@ const ChatWindow = ({ chatUser, onMessageSent }) => {
         chatUser={chatUser}
         isTyping={isTyping}
         isOnline={onlineUsers.includes(chatUser._id)}
+        onBack={onBack}
       />
 
       <div className="chat-body">

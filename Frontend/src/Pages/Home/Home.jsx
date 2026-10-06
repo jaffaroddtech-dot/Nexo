@@ -30,6 +30,13 @@ const Home = () => {
   }, [location.state]);
 
 
+  // mobile pe chat khuli ho to sidebar hide karne ke liye body pe class
+  useEffect(() => {
+    document.body.classList.toggle("chat-open", isMobile && !!selectedChat);
+    return () => document.body.classList.remove("chat-open");
+  }, [isMobile, selectedChat]);
+
+
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth <= 768);
@@ -460,28 +467,12 @@ const Home = () => {
           </div>
         </div>
       )}
-
       {(!isMobile || selectedChat) && (
         <div className="User-messages">
-          {isMobile &&
-            selectedChat && (
-              <button
-                className="mobile-back-btn"
-                onClick={() =>
-                  setSelectedChat(
-                    null
-                  )
-                }
-              >
-                <ChevronLeft />
-              </button>
-            )}
-
           <ChatWindow
             chatUser={selectedChat}
-            onMessageSent={
-              fetchConversations
-            }
+            onMessageSent={fetchConversations}
+            onBack={isMobile ? () => setSelectedChat(null) : undefined}
           />
         </div>
       )}

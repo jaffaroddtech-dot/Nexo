@@ -4,6 +4,7 @@
   width: 60px;
   height: 100vh; /* full height */
   display: flex;
+  flex-shrink: 0;
   flex-direction: column;
   justify-content: space-between;
   padding: 1rem;
