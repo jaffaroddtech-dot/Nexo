@@ -2,7 +2,17 @@ import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "./ContactWindow.css";
 import {
-  Phone, MessageCircle, Trash2, Send, Edit2, Check, UserRound, Info, MapPin, Mail, MessageCircleMore
+  Phone,
+  MessageCircle,
+  Trash2,
+  Pencil,
+  Check,
+  X,
+  UserRound,
+  MapPin,
+  Mail,
+  MessageCircleMore,
+  ChevronLeft,
 } from "lucide-react";
 import { removeContactState, updateContactState } from "../../features/contactSlice";
 import { deleteContact, updateContact } from "../../../Apis/contact";
@@ -10,29 +20,60 @@ import { useDispatch, useSelector } from "react-redux";
 import { toast } from "react-toastify";
 import defaultPic from "../../assets/default.jfif";
 
-const ContactWindow = ({ contactId, onDeleted }) => {
+const ContactWindow = ({ contactId, onDeleted, onBack }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const contact = useSelector(state =>
-    state.contacts.find(c => c._id === contactId)
+  const contact = useSelector((state) =>
+    state.contacts.find((c) => c._id === contactId)
   );
 
   const [editing, setEditing] = useState(false);
-  const editRef = useRef(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [newName, setNewName] = useState(contact?.savedName || "");
+  const editRef = useRef(null);
 
   useEffect(() => {
     if (contact) setNewName(contact.savedName);
   }, [contact?.savedName]);
 
-  // Delete Contact
+  // dusra contact select ho to edit/confirm reset
+  useEffect(() => {
+    setEditing(false);
+    setConfirmDelete(false);
+  }, [contactId]);
+
+  // bahar click par edit band
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (editRef.current && !editRef.current.contains(event.target)) {
+        setEditing(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // EMPTY
+  if (!contact) {
+    return (
+      <div className="cw-empty">
+        <div className="contact-logo"></div>
+        <h2>Select a contact to view details</h2>
+      </div>
+    );
+  }
+
+  const u = contact.contactUser || {};
+
+  const openChat = () => navigate("/", { state: { chatUser: u } });
+
   const handleDelete = async () => {
     try {
       const res = await deleteContact(contact._id);
       if (res.status) {
         dispatch(removeContactState(contact._id));
         toast.success(res.message);
-        onDeleted();
+        onDeleted?.();
       } else {
         toast.error(res.message);
       }
@@ -41,23 +82,10 @@ const ContactWindow = ({ contactId, onDeleted }) => {
     }
   };
 
-  // Outside click listener
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (editRef.current && !editRef.current.contains(event.target)) {
-        setEditing(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  // Update Saved Name
   const handleUpdate = async () => {
+    if (!newName.trim()) return;
     try {
-      const res = await updateContact(contact._id, { savedName: newName });
+      const res = await updateContact(contact._id, { savedName: newName.trim() });
       if (res.status) {
         dispatch(updateContactState(res.data));
         toast.success(res.message);
@@ -70,124 +98,124 @@ const ContactWindow = ({ contactId, onDeleted }) => {
     }
   };
 
-  if (!contact) {
-    return (
-      <div className="empty-contact d-flex flex-column justify-content-center">
-        <div className="contact-logo"></div>
-        <h2>Choose a conversation to continue</h2>
-      </div>
-    );
-  }
+  const info = [
+    { icon: Phone, label: "Phone", value: u.phoneNumber },
+    { icon: Mail, label: "Email", value: u.email },
+    { icon: MapPin, label: "Country", value: u.country },
+    { icon: UserRound, label: "Profile name", value: u.name },
+    { icon: MessageCircleMore, label: "Bio", value: u.bio },
+  ].filter((i) => i.value);
 
   return (
-    <div className="contact-page">
-      <div className="contact-card">
-        {/* Profile Image */}
-        <div className="profile-avatar">
-          <img src={contact.contactUser.profilePic || defaultPic} className="profilepic" alt="profile" />
+    <div className="cw-page">
+      {onBack && (
+        <div className="cw-topbar">
+          <button type="button" className="cw-back" onClick={onBack} aria-label="Back">
+            <ChevronLeft size={24} />
+          </button>
+          <span>Contacts</span>
+        </div>
+      )}
+
+      <div className="cw-card">
+        {/* HERO */}
+        <div className="cw-hero">
+          <img src={u.profilePic || defaultPic} alt="" className="cw-avatar" />
+
+          {editing ? (
+            <div className="cw-edit" ref={editRef}>
+              <input
+                autoFocus
+                type="text"
+                value={newName}
+                onChange={(e) => setNewName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleUpdate();
+                  if (e.key === "Escape") setEditing(false);
+                }}
+              />
+              <button type="button" className="cw-edit-ok" onClick={handleUpdate} aria-label="Save">
+                <Check size={16} />
+              </button>
+              <button type="button" className="cw-edit-x" onClick={() => setEditing(false)} aria-label="Cancel">
+                <X size={16} />
+              </button>
+            </div>
+          ) : (
+            <div className="cw-name-row">
+              <h2 className="cw-name">{contact.savedName}</h2>
+              <button
+                type="button"
+                className="cw-edit-btn"
+                onClick={() => setEditing(true)}
+                aria-label="Edit name"
+              >
+                <Pencil size={15} />
+              </button>
+            </div>
+          )}
+
+          {u.bio && <p className="cw-hero-bio">{u.bio}</p>}
+
+          {/* QUICK ACTIONS */}
+          <div className="cw-actions">
+            <button type="button" className="cw-action" onClick={openChat}>
+              <span className="cw-action-icon">
+                <MessageCircle size={20} />
+              </span>
+              <span>Message</span>
+            </button>
+
+            {u.phoneNumber && (
+              <a className="cw-action" href={`tel:${u.phoneNumber}`}>
+                <span className="cw-action-icon">
+                  <Phone size={20} />
+                </span>
+                <span>Call</span>
+              </a>
+            )}
+          </div>
         </div>
 
-        {/* Header */}
-        <div className="contact-header">
-          {editing ? (
-            <div className="edit-name d-flex justify-content-center">
-              <div className="edit-wrapper" ref={editRef}>
-                <input
-                  type="text"
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  className="edit-input"
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") handleUpdate();
-                    if (e.key === "Escape") setEditing(false);
-                  }}
-                />
-                <button onClick={handleUpdate} className="edit-check">
-                  <Check size={16} />
+        {/* INFO */}
+        <div className="cw-section">
+          <h4 className="cw-section-title">Contact Info</h4>
+          {info.map(({ icon: Icon, label, value }) => (
+            <div key={label} className="cw-row">
+              <span className="cw-row-icon">
+                <Icon size={16} />
+              </span>
+              <div className="cw-row-text">
+                <small>{label}</small>
+                <span>{value}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* DELETE */}
+        <div className="cw-section">
+          {confirmDelete ? (
+            <div className="cw-confirm">
+              <p>Ye contact delete karna hai?</p>
+              <div className="cw-confirm-btns">
+                <button type="button" className="cw-btn-ghost" onClick={() => setConfirmDelete(false)}>
+                  Cancel
+                </button>
+                <button type="button" className="cw-btn-danger solid" onClick={handleDelete}>
+                  <Trash2 size={16} /> Delete
                 </button>
               </div>
             </div>
           ) : (
-            <div className="name-row d-flex justify-content-center align-items-center gap-1">
-              <h2>{contact.savedName}</h2>
-              <Edit2
-                size={16}
-                className="edit-icon"
-                onClick={() => setEditing(true)}
-                style={{ cursor: "pointer" }}
-              />
-            </div>
+            <button type="button" className="cw-btn-danger" onClick={() => setConfirmDelete(true)}>
+              <Trash2 size={16} /> Delete Contact
+            </button>
           )}
-        </div>
-
-        <div className="divider"></div>
-
-        {/* Contact Details */}
-        <div className="contact-body">
-          <div className="contact-top">
-            <div className="contact-info-2">
-              <div className="info-row">
-                <Phone size={18} />
-                <span>{contact.contactUser.phoneNumber}</span>
-              </div>
-            </div>
-
-            {/* Action Icons */}
-            <div className="action-icons">
-              <Phone size={20} />
-              <MessageCircle size={20} onClick={() =>
-                navigate("/", {
-                  state: {
-                    chatUser: contact.contactUser,
-                  },
-                })
-              } />
-            </div>
-          </div>
-
-          {/* Contact Info */}
-          <div className="details">
-            <p className="details-title">Contact Info</p>
-            <div className="detail-row">
-              <UserRound size={18} />
-              <span>{contact.contactUser.name}</span>
-            </div>
-            <div className="detail-row">
-              <Mail size={18} />
-              <span>{contact.contactUser.email}</span>
-            </div>
-            <div className="detail-row">
-              <MapPin size={18} />
-              <span>{contact.contactUser.country}</span>
-            </div>
-            <div className="detail-row">
-              <MessageCircleMore size={18} />
-              <span>{contact.contactUser.bio}</span>
-            </div>
-          </div>
-
-
-          {/* Buttons */}
-          <div className="d-flex align-items-center justify-content-between">
-            <button className="delete-btn" onClick={handleDelete}>
-              <Trash2 />
-            </button>
-            <button
-              className="sendd-btn"
-              onClick={() =>
-                navigate("/", {
-                  state: {
-                    chatUser: contact.contactUser,
-                  },
-                })
-              }
-            >
-              <Send />
-            </button>
-          </div>
         </div>
       </div>
     </div>
   );
-}
+};
+
 export default ContactWindow;

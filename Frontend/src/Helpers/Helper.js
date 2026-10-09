@@ -56,3 +56,24 @@ hour: "numeric",
 minute: "2-digit",
 });
 };
+
+
+
+export const formatChatTime = (date) => {
+  if (!date) return "";
+  const d = new Date(date);
+  if (isNaN(d)) return "";
+
+  const now = new Date();
+  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const diffDays = Math.floor(
+    (startOfToday - new Date(d.getFullYear(), d.getMonth(), d.getDate())) / 86400000
+  );
+
+  if (diffDays <= 0) {
+    return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return d.toLocaleDateString([], { weekday: "short" });
+  return d.toLocaleDateString([], { day: "2-digit", month: "short" });
+};

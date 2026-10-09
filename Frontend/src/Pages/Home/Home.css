@@ -1,6 +1,4 @@
-/* =========================
-   LAYOUT
-========================= */
+/* 
 
 .App {
   display: flex;
@@ -14,8 +12,8 @@
 } 
 
 .App > main {
-  flex: 1 1 0;             /* sidebar ke baad bacha hua space */
-  min-width: 0;            /* sab se zaroori, yehi overflow rokta hai */
+  flex: 1 1 0;             
+  min-width: 0;            
   height: 100dvh;
   overflow: hidden;
 }
@@ -41,7 +39,7 @@
 
 .User-messages {
   position: relative;
-  /* mobile-back-btn ke liye */
+
   flex: 1 1 0;
   min-width: 0;
   height: 100%;
@@ -64,11 +62,6 @@
 }
 
 
-/* =========================
-   SEARCH
-========================= */
-
-/* From Uiverse.io by joe-watson-sbf */
 .search {
   display: flex;
   align-items: center;
@@ -103,9 +96,7 @@
 }
 
 
-/* =========================
-   RADIO TOGGLE
-========================= */
+
 
 .radio-input {
   position: relative;
@@ -150,9 +141,6 @@
 }
 
 
-/* =========================
-   NEW BUTTON
-========================= */
 
 .new-button {
   padding: 0.2rem 0.8rem;
@@ -169,10 +157,6 @@
   background-color: #6747d8;
 }
 
-
-/* =========================
-   CONVERSATION ITEM
-========================= */
 
 .messages {
   position: relative;
@@ -239,9 +223,6 @@
 }
 
 
-/* =========================
-   AVATAR
-========================= */
 
 .profilePictures {
   position: relative;
@@ -272,9 +253,7 @@
 }
 
 
-/* =========================
-   SCROLLBAR
-========================= */
+
 
 .messages-list::-webkit-scrollbar {
   width: 6px;
@@ -287,10 +266,7 @@
 
 
 
-/* =========================
-   RESPONSIVE
-   (hamesha file ke END mein)
-========================= */
+
 
 @media (max-width: 992px) {
   .messages-content {
@@ -303,7 +279,6 @@
 @media (max-width: 768px) {
   .messages-content {
     flex: 1 1 0;
-    /* poori bachi hui width */
     width: auto;
     min-width: 0;
     border-right: none;
@@ -353,16 +328,433 @@
 
 
 
+.Main::-webkit-scrollbar {
+    width: 6px;
+}
 
+.Main::-webkit-scrollbar-thumb {
+    background: #D9D5EF;
+    border-radius: 4px;
+} */
+
+
+
+/* =========================
+   LAYOUT
+========================= */
+.App {
+  display: flex;
+  width: 100%;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.App > .sidebar {
+  flex: 0 0 auto;
+}
+
+.App > main {
+  flex: 1 1 0;
+  min-width: 0;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.Main {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  background-color: #0b0c1e;
+  overflow: hidden;
+}
+
+.messages-content {
+  flex: 0 0 380px;
+  width: 380px;
+  min-width: 380px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #121330;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.User-messages {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  background: radial-gradient(circle at 30% 20%, #1a1c3e 0%, #0f1024 60%, #0b0c1e 100%);
+}
+
+/* =========================
+   HEADER
+========================= */
+.chats-header {
+  flex-shrink: 0;
+  padding: 20px 16px 12px;
+}
+
+.chats-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.chats-title {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.new-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border: none;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: #7758f9;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.new-button:hover,
+.new-button:active {
+  background: #6747d8;
+}
+
+/* =========================
+   SEARCH
+========================= */
+.chat-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  height: 42px;
+  border-radius: 12px;
+  color: #8d8fa6;
+  background: #0f1024;
+  border: 1px solid #2a2c55;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.chat-search:focus-within {
+  border-color: #7758f9;
+  box-shadow: 0 0 0 3px rgba(119, 88, 249, 0.2);
+}
+
+.chat-search svg {
+  flex-shrink: 0;
+}
+
+.chat-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: #fff;
+  font-size: 14px;
+}
+
+.chat-search input::placeholder {
+  color: #6c6e8a;
+}
+
+/* =========================
+   TABS
+========================= */
+.chat-tabs {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.chat-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 16px;
+  border: 1px solid #2a2c55;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #a9abc8;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
+}
+
+.chat-tab:hover {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.chat-tab.is-active {
+  color: #fff;
+  background: #7758f9;
+  border-color: #7758f9;
+}
+
+.tab-badge {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  box-sizing: border-box;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+/* =========================
+   LIST
+========================= */
+.messages-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 8px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.messages {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+  outline: none;
+}
+
+.messages:hover,
+.messages:focus-visible {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.messages.is-active {
+  background: rgba(119, 88, 249, 0.18);
+}
+
+.messages.is-active::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 18%;
+  bottom: 18%;
+  width: 3px;
+  border-radius: 3px;
+  background: #7758f9;
+}
+
+.message-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.message-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 3px;
+}
+
+.message-sender {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.message-time {
+  flex-shrink: 0;
+  font-size: 12px;
+  white-space: nowrap;
+  color: #8d8fa6;
+}
+
+.messages.is-unread .message-time {
+  color: #a58fff;
+  font-weight: 600;
+}
+
+.message-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.message-text {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 13px;
+  color: #8d8fa6;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.messages.is-unread .message-text {
+  color: #e6e3ff;
+  font-weight: 600;
+}
+
+.message-text.is-typing {
+  color: #9b85ff;
+  font-style: italic;
+  font-weight: 500;
+}
+
+.unread-dot {
+  flex-shrink: 0;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  box-sizing: border-box;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 20px;
+  text-align: center;
+  color: #fff;
+  background: #7758f9;
+}
+
+/* =========================
+   AVATAR
+========================= */
+.profilePictures {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  flex-shrink: 0;
+}
+
+.profile-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+}
+
+.online-dot {
+  position: absolute;
+  right: 0;
+  bottom: 1px;
+  width: 13px;
+  height: 13px;
+  box-sizing: border-box;
+  border-radius: 50%;
+  background: #2ecc71;
+  border: 2px solid #121330;
+}
+
+/* =========================
+   EMPTY
+========================= */
+.no-contacts {
+  margin: auto;
+  padding: 40px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  color: #6c6e8a;
+}
+
+.no-contacts p {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* =========================
+   SCROLLBAR
+========================= */
+.messages-list {
+  scrollbar-width: thin;
+  scrollbar-color: #2a2c55 transparent;
+}
+
+.messages-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.messages-list::-webkit-scrollbar-thumb {
+  background: #2a2c55;
+  border-radius: 4px;
+}
+
+/* =========================
+   RESPONSIVE (hamesha END mein)
+========================= */
+@media (max-width: 992px) {
+  .messages-content {
+    flex-basis: 320px;
+    width: 320px;
+    min-width: 320px;
+  }
+}
 
 @media (max-width: 768px) {
-  body.chat-open .App > .sidebar {
-    width: 0 !important;
-    min-width: 0 !important;
-    flex-basis: 0 !important;
-    margin-left: 0;
-    opacity: 0;
-    overflow: hidden;
-    pointer-events: none;
+  .messages-content {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+    border-right: none;
+  }
+
+  .chats-header {
+    padding: 16px 14px 10px;
+  }
+
+  .chats-title {
+    font-size: 20px;
+  }
+
+  .chat-search input {
+    font-size: 16px; /* iOS zoom na kare */
+  }
+
+  .messages {
+    padding: 11px 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .profilePictures {
+    width: 46px;
+    height: 46px;
+  }
+
+  .message-sender {
+    font-size: 14px;
+  }
+
+  .message-time {
+    font-size: 11px;
   }
 }

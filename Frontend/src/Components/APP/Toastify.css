@@ -1,0 +1,110 @@
+/* =========================================================
+   react-toastify theme (Nexo dark purple)
+   Import AFTER "react-toastify/dist/ReactToastify.css"
+   Selectors are prefixed with .Toastify__toast-container so
+   they win even if the import order is wrong.
+========================================================= */
+
+/* ---------- variables ---------- */
+:root,
+.Toastify__toast-container {
+  --toastify-color-dark: #181a3a;
+  --toastify-color-light: #181a3a;
+  --toastify-color-info: #7758f9;
+  --toastify-color-success: #2fd3a6;
+  --toastify-color-warning: #ffc24c;
+  --toastify-color-error: #ff6b81;
+
+  --toastify-icon-color-info: #9b85ff;
+  --toastify-icon-color-success: #2fd3a6;
+  --toastify-icon-color-warning: #ffc24c;
+  --toastify-icon-color-error: #ff6b81;
+
+  --toastify-text-color-dark: #ffffff;
+  --toastify-text-color-light: #ffffff;
+  --toastify-color-progress-dark: #7758f9;
+  --toastify-color-progress-light: #7758f9;
+  --toastify-font-family: inherit;
+}
+
+/* ---------- toast card ---------- */
+.Toastify__toast-container .Toastify__toast {
+  min-height: 56px;
+  padding: 8px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #181a3a;
+  color: #fff;
+  font-size: 14px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+}
+
+.Toastify__toast-container .Toastify__toast-body {
+  padding: 4px 0;
+  font-weight: 500;
+}
+
+.Toastify__toast-container .Toastify__toast-icon {
+  margin-inline-end: 12px;
+}
+
+/* ---------- icons ---------- */
+.Toastify__toast-container .Toastify__toast--success .Toastify__toast-icon svg { fill: #2fd3a6; }
+.Toastify__toast-container .Toastify__toast--error   .Toastify__toast-icon svg { fill: #ff6b81; }
+.Toastify__toast-container .Toastify__toast--warning .Toastify__toast-icon svg { fill: #ffc24c; }
+.Toastify__toast-container .Toastify__toast--info    .Toastify__toast-icon svg { fill: #9b85ff; }
+
+/* ---------- progress bar ---------- */
+
+
+.Toastify__toast-container .Toastify__progress-bar--success { background: #2fd3a6 !important; }
+.Toastify__toast-container .Toastify__progress-bar--error   { background: #ff6b81 !important; }
+.Toastify__toast-container .Toastify__progress-bar--warning { background: #ffc24c !important; }
+.Toastify__toast-container .Toastify__progress-bar--info    { background: #7758f9 !important; }
+
+/* faint track behind the bar (remove the track completely: use "transparent") */
+.Toastify__toast-container .Toastify__progress-bar--bg {
+  background: rgba(255, 255, 255, 0.06) !important;
+  opacity: 1;
+}
+
+/* ---------- close button ---------- */
+.Toastify__toast-container .Toastify__close-button {
+  align-self: center;
+  color: #8d8fa6;
+  opacity: 1;
+}
+
+.Toastify__toast-container .Toastify__close-button:hover {
+  color: #fff;
+}
+
+/* ---------- mobile: full width, clear of the notch ---------- */
+@media (max-width: 480px) {
+  .Toastify__toast-container {
+    width: calc(100% - 24px);
+    left: 12px;
+    right: 12px;
+    top: calc(12px + env(safe-area-inset-top, 0px));
+    padding-top: 3px;
+    
+  }
+
+  .Toastify__toast-container .Toastify__toast {
+    margin-bottom: 8px;
+  }
+}
+
+
+.Toastify__toast-container .Toastify__toast {
+  min-height: 56px;
+  padding: 8px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: #181a3a;
+  color: #fff;
+  font-size: 14px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+
+  overflow: hidden; /* <-- add this */
+}

@@ -1227,23 +1227,23 @@
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-@media (max-width:768px){
-body.chat-open main{
-margin-left:0 !important;
+.reply-preview-left {
+  min-width: 0;
+  flex: 1;
 }
+ 
+.reply-preview-text {
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+
+
+
+
+
+
+
+
+

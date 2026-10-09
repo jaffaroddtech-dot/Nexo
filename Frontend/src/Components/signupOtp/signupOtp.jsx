@@ -1,145 +1,91 @@
-import React, { useState, useRef, useEffect } from "react";
-import { Check, X } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Check, X, MailCheck } from "lucide-react";
 import { maskEmail } from "../../Helpers/Helper";
-import "./signupOtp.css";
+import OtpInput from "../OTPinput/OtpInput";
+import "../resetPassword/resetPassword.css"; // shared modal styles
+
+const OTP_LENGTH = 6;
 
 const SignupOtp = ({ isOpen, onClose, onConfirm, onSendOtp, submitData }) => {
-    const [otp, setOtp] = useState(Array(6).fill(""));
-    const [timer, setTimer] = useState(0);
-    const modalRef = useRef(null);
-    const inputsRef = useRef([]);
+  const [otp, setOtp] = useState(Array(OTP_LENGTH).fill(""));
+  const [timer, setTimer] = useState(0);
 
-    useEffect(() => {
-        let interval;
+  useEffect(() => {
+    if (timer <= 0) return;
+    const interval = setInterval(() => setTimer((t) => t - 1), 1000);
+    return () => clearInterval(interval);
+  }, [timer]);
 
-        if (timer > 0) {
-            interval = setInterval(() => {
-                setTimer((t) => t - 1);
-            }, 1000);
-        }
+  useEffect(() => {
+    if (!isOpen) {
+      setOtp(Array(OTP_LENGTH).fill(""));
+      setTimer(0);
+      return;
+    }
+    const onKeyDown = (e) => e.key === "Escape" && onClose();
+    document.addEventListener("keydown", onKeyDown);
+    return () => document.removeEventListener("keydown", onKeyDown);
+  }, [isOpen, onClose]);
 
-        return () => clearInterval(interval);
-    }, [timer]);
+  if (!isOpen) return null;
 
-    useEffect(() => {
-        if (!isOpen) {
-            setOtp(Array(6).fill(""));
-            setTimer(0);
-        }
-    }, [isOpen]);
+  const otpValue = otp.join("");
+  const canSubmit = otpValue.length === OTP_LENGTH;
 
-    if (!isOpen) return null;
+  const handleSendOtp = async () => {
+    try {
+      await onSendOtp();
+      setTimer(60);
+    } catch (error) {}
+  };
 
-    const handleChange = (e, index) => {
-        const value = e.target.value.replace(/[^0-9]/g, "");
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!canSubmit) return;
+    onConfirm(otpValue);
+  };
 
-        if (!value) return;
+  return (
+    <div
+      className="rp-overlay"
+      onMouseDown={(e) => e.target === e.currentTarget && onClose()}
+    >
+      <form className="rp-card" onSubmit={handleSubmit}>
+        <button type="button" onClick={onClose} className="rp-close" aria-label="Close">
+          <X size={18} />
+        </button>
 
-        const newOtp = [...otp];
-        newOtp[index] = value[0];
-
-        setOtp(newOtp);
-
-        if (index < 5) {
-            inputsRef.current[index + 1]?.focus();
-        }
-    };
-
-    const handleKeyDown = (e, index) => {
-        if (e.key === "Backspace") {
-            const newOtp = [...otp];
-
-            if (otp[index]) {
-                newOtp[index] = "";
-                setOtp(newOtp);
-            } else if (index > 0) {
-                newOtp[index - 1] = "";
-                setOtp(newOtp);
-                inputsRef.current[index - 1]?.focus();
-            }
-        }
-    };
-
-    const handleSendOtp = async () => {
-        try {
-            await onSendOtp();
-            setTimer(60);
-        } catch (error) {
-        }
-    };
-
-    const handleConfirm = () => {
-        const enteredOtp = otp.join("");
-
-        if (enteredOtp.length !== 6) {
-            return;
-        }
-
-        onConfirm(enteredOtp);
-    };
-
-    return (
-        <div className="modal-overlay">
-            <div className="modal-card" ref={modalRef}>
-
-                <div className="modal-header d-flex justify-content-between align-items-center">
-                    <h2>Sign Up OTP</h2>
-
-                    <button
-                        onClick={onClose}
-                        className="close-btn"
-                    >
-                        <X size={18} />
-                    </button>
-                </div>
-
-                <div className="modal-body">
-
-                    <div className="input-groupp">
-
-                        <label>Enter OTP sent to {maskEmail(submitData?.email)}</label>
-
-                        <div className="otp-container">
-                            {otp.map((digit, i) => (
-                                <input
-                                    key={i}
-                                    type="text"
-                                    maxLength="1"
-                                    value={digit}
-                                    onChange={(e) => handleChange(e, i)}
-                                    onKeyDown={(e) => handleKeyDown(e, i)}
-                                    ref={(el) => (inputsRef.current[i] = el)}
-                                    className="otp-box"
-                                />
-                            ))}
-                        </div>
-
-                        <button
-                            type="button"
-                            className="sendd-btn"
-                            onClick={handleSendOtp}
-                            disabled={timer > 0}
-                        >
-                            {timer > 0 ? `Resend in ${timer}s` : "Send OTP"}
-                        </button>
-                    </div>
-
-                    <div className="modal-footer d-flex justify-content-end gap-2">
-
-                        <button
-                            className="sendd-btn"
-                            onClick={handleConfirm}
-                        >
-                            <Check size={18} />
-                            Confirm
-                        </button>
-
-                    </div>
-
-                </div>
-            </div>
+        <div className="rp-icon">
+          <MailCheck size={24} />
         </div>
-    );
+        <h2 className="rp-title">Verify your email</h2>
+        <p className="rp-subtitle">
+          6-digit code sent to <b>{maskEmail(submitData?.email)}</b> 
+        </p>
+
+        <div className="rp-group">
+          <label>Verification Code</label>
+          <OtpInput value={otp} onChange={setOtp} length={OTP_LENGTH} autoFocus />
+
+          <div className="rp-resend">
+            <span>Get your code</span>
+            <button
+              type="button"
+              className="rp-link"
+              onClick={handleSendOtp}
+              disabled={timer > 0}
+            >
+              {timer > 0 ? `Resend in ${timer}s` : "Send OTP"}
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" className="rp-confirm" disabled={!canSubmit}>
+          <Check size={18} /> Confirm
+        </button>
+      </form>
+    </div>
+  );
 };
 
 export default SignupOtp;

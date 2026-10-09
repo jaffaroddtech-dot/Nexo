@@ -1,426 +1,406 @@
-.empty-contact {
-    height: 100%;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: #8D8FA6;
-    text-align: center;
+/* =========================
+   PAGE (khud scroll hota hai)
+========================= */
+.cw-page {
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+  padding: 32px 20px 40px;
+  color: #fff;
+  scrollbar-width: thin;
+  scrollbar-color: #7758f9 transparent;
 }
 
-.contact-page {
-    width: 100%;
-    margin-top: 20px;
-    height: 100vh;
-    background: radial-gradient(circle at 30% 20%, #1a1c3e 0%, #0f1024 60%, #0b0c1e 100%);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-family: Arial, sans-serif;
+.cw-card {
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-
-/* Card */
-
-.contact-card {
-    position: relative;
-
-    width: 495px;
-    min-height: 365px;
-
-    background: #171943;
-    border-radius: 15px;
-
-    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
-
-    color: white;
-}
-
-
-/* Avatar */
-
-.profile-avatar {
-    position: absolute;
-
-    top: -68px;
-    left: 50%;
-
-    transform: translateX(-50%);
-
-    width: 108px;
-    height: 108px;
-
-    border-radius: 50%;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    font-size: 40px;
-    font-weight: 500;
-
-    background: linear-gradient(135deg,
-            #8155ed,
-            #a94fd0);
-
-    border: 3px solid #171943;
-}
-
-
-/* Header */
-
-.contact-header {
-    padding-top: 30px;
-    gap: 0px;
-    text-align: center;
-}
-
-.contact-header h2 {
-    margin: 5px 0 4px;
-
-    font-size: 23px;
-    font-weight: 600;
-}
-
-.contact-header span {
-    color: #18c5a4;
-    font-size: 13px;
-}
-
-
-/* Divider */
-
-.divider {
-    height: 1px;
-    background: rgba(255, 255, 255, 0.06);
-
-    margin-top: 20px;
-}
-
-
-/* Body */
-
-.contact-body {
-    padding: 25px 22px 20px;
-}
-
-
-/* Top section */
-
-.contact-top {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-}
-
-.contact-info-2 {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-}
-
-.info-row {
-    display: flex;
-    align-items: center;
-    gap: 11px;
-
-    color: #d2d2df;
-    font-size: 14px;
-}
-
-.info-row svg {
-    color: #8d55ef;
-
-    background: #30206b;
-    padding: 4px;
-
-    width: 25px;
-    height: 25px;
-
-    border-radius: 50%;
-}
-
-
-/* Action icons */
-
-.action-icons {
-    display: flex;
-    gap: 22px;
-
-    color: #8d55ef;
-
-    padding-top: 4px;
-}
-
-.action-icons svg {
-    cursor: pointer;
-
-    transition: 0.2s;
-}
-
-.action-icons svg:hover {
-    color: #b37cff;
-}
-
-
-/* Details */
-
-.details {
-    margin-top: 28px;
-}
-
-.details-title {
-    margin: 0 0 13px;
-
-    color: #9b9bad;
-    font-size: 14px;
-}
-
-.detail-row {
-    display: flex;
-    align-items: center;
-
-    gap: 10px;
-
-    color: #d4d4df;
-
-    font-size: 14px;
-
-    margin-bottom: 12px;
-}
-
-.detail-row svg {
-    color: #bdb7d5;
-}
-
-
-/* Button */
-
-.sendd-btn {
-    display: block;
-
-    margin-left: auto;
-    margin-top: 20px;
-
-    border: none;
-    border-radius: 10px;
-
-    padding: 8px 20px;
-
-    background: linear-gradient(135deg,
-            #7758f9,
-            #8c4de8);
-
-    color: white;
-
-
-    cursor: pointer;
-
-    box-shadow: 0 5px 15px rgba(119, 88, 249, 0.25);
-
-    transition: 0.2s;
-}
-
-.sendd-btn:hover {
-    /* transform: translateY(-1px); */
-    box-shadow: 0 7px 18px rgba(119, 88, 249, 0.35);
-}
-
-
-.contact-logo {
-    background-image: url('../../assets/contact.png');
-    height: 300px;
-    width: 300px;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: cover;
-}
-
-
-.empty-contact {
-    width: 100%;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    color: #fff;
-}
-
-.empty-contact h2 {
-    font-size: 17px;
-    color: #fff
-}
-
-
-
-.profile-avatar img {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    object-fit: cover;
-}
-
-
-.delete-btn {
-    display: block;
-
-    margin-top: 20px;
-
-    border: none;
-    border-radius: 10px;
-
-    padding: 8px 20px;
-
-    background: linear-gradient(135deg,
-            #e63946,
-            /* bright red */
-            #d90429);
-    /* darker red */
-    color: white;
-
-
-    cursor: pointer;
-
-    box-shadow: 0 5px 15px rgba(230, 57, 70, 0.25);
-
-    transition: 0.2s;
-}
-
-.delete-btn:hover {
-    box-shadow: 0 7px 18px rgba(230, 57, 70, 0.45); /* zyada glow */
-}
-
-
-.edit-name {
+/* mobile back bar (desktop pe hidden, JS sirf mobile pe onBack deta hai) */
+.cw-topbar {
   display: flex;
   align-items: center;
+  gap: 6px;
+  margin: -12px 0 12px -8px;
+  font-size: 16px;
+  font-weight: 600;
 }
 
-.edit-wrapper {
-  position: relative;
+.cw-back {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: #fff;
+  cursor: pointer;
+}
+
+.cw-back:active {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* =========================
+   HERO
+========================= */
+.cw-hero,
+.cw-section {
+  background: #181a3a;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 20px;
+}
+
+.cw-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28px 20px 22px;
+  text-align: center;
+}
+
+.cw-avatar {
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: block;
+  border: 3px solid #7758f9;
+}
+
+.cw-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  max-width: 100%;
+  margin-top: 14px;
+}
+
+.cw-name {
+  margin: 0;
+  font-size: 22px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cw-edit-btn {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: #8d8fa6;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.cw-edit-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff;
+}
+
+.cw-hero-bio {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: #a9abc8;
+}
+
+/* edit mode */
+.cw-edit {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 14px;
+  width: 100%;
+  max-width: 300px;
+}
+
+.cw-edit input {
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 9px 12px;
+  font-size: 16px;
+  color: #fff;
+  background: #0f1024;
+  border: 1px solid #7758f9;
+  border-radius: 10px;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(119, 88, 249, 0.2);
+}
+
+.cw-edit-ok,
+.cw-edit-x {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+
+.cw-edit-ok {
+  color: #fff;
+  background: #7758f9;
+}
+
+.cw-edit-x {
+  color: #a9abc8;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* =========================
+   QUICK ACTIONS
+========================= */
+.cw-actions {
+  display: flex;
+  justify-content: center;
+  gap: 28px;
+  margin-top: 20px;
+}
+
+.cw-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  border: none;
+  background: none;
+  font-size: 12px;
+  color: #cfcfff;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.cw-action-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  color: #fff;
+  background: #7758f9;
+  transition: background 0.2s, transform 0.15s;
+}
+
+.cw-action:hover .cw-action-icon,
+.cw-action:active .cw-action-icon {
+  background: #6747d8;
+  transform: translateY(-1px);
+}
+
+/* =========================
+   INFO
+========================= */
+.cw-section {
+  padding: 20px;
+}
+
+.cw-section-title {
+  margin: 0 0 14px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  color: #8d8fa6;
+}
+
+.cw-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.cw-row + .cw-row {
+  border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cw-row-icon {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  color: #b9a8ff;
+  background: rgba(119, 88, 249, 0.16);
+}
+
+.cw-row-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.cw-row-text small {
+  font-size: 11px;
+  color: #8d8fa6;
+}
+
+.cw-row-text span {
+  font-size: 14px;
+  color: #e6e3ff;
+  word-break: break-word;
+}
+
+/* =========================
+   DELETE
+========================= */
+.cw-btn-danger,
+.cw-btn-ghost {
   display: inline-flex;
   align-items: center;
-  background: #1e2a38; /* dark bg */
-  border-radius: 6px;
-  padding: 2px 6px;
-}
-
-.edit-input {
-  border: none;
-  outline: none;
-  background: transparent;
-  color: white;
-  font-size: 14px;
-  width: 100px; /* chhoti width */
-}
-
-.edit-check {
-  border: none;
-  background: transparent;
-  color: #00ff88; /* green tick */
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 18px;
+  border-radius: 10px;
+  font-size: 15px;
   cursor: pointer;
-  margin-left: 4px;
+  transition: background 0.2s;
+}
+
+.cw-btn-danger {
+  width: 100%;
+  box-sizing: border-box;
+  color: #ff7a90;
+  background: transparent;
+  border: 1px solid rgba(255, 122, 144, 0.35);
+}
+
+.cw-btn-danger:hover,
+.cw-btn-danger:active {
+  background: rgba(255, 122, 144, 0.12);
+}
+
+.cw-btn-danger.solid {
+  width: auto;
+  flex: 1;
+  color: #fff;
+  background: #e63946;
+  border-color: #e63946;
+}
+
+.cw-btn-danger.solid:hover {
+  background: #d12a37;
+}
+
+.cw-btn-ghost {
+  flex: 1;
+  color: #cfcfff;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid transparent;
+}
+
+.cw-btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.cw-confirm p {
+  margin: 0 0 12px;
+  text-align: center;
+  font-size: 14px;
+  color: #cfcfff;
+}
+
+.cw-confirm-btns {
   display: flex;
+  gap: 10px;
+}
+
+/* =========================
+   EMPTY
+========================= */
+.cw-empty {
+  height: 100%;
+  box-sizing: border-box;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
   align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: #fff;
 }
 
-
-@media (max-width: 992px) {
-  .contact-card {
-    width: 90%;
-    max-width: 500px;
-  }
+.cw-empty h2 {
+  font-size: 17px;
+  color: #fff;
 }
 
+.contact-logo {
+  width: min(300px, 70vw);
+  aspect-ratio: 1 / 1;
+  background-image: url('../../assets/contact.png');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+
+/* =========================
+   MOBILE
+========================= */
 @media (max-width: 768px) {
-  .contact-page {
-    margin-top: 0;
-    padding: 20px;
-    height: 100vh;
+  .cw-page {
+    padding: 16px 12px 24px;
   }
 
-  .contact-card {
-    width: 100%;
-    min-height: auto;
+  .cw-hero {
+    padding: 22px 16px 18px;
   }
 
-  .profile-avatar {
-    width: 90px;
-    height: 90px;
-    top: -50px;
+  .cw-avatar {
+    width: 92px;
+    height: 92px;
   }
 
-  .contact-header h2 {
+  .cw-name {
     font-size: 20px;
   }
 
-  .detail-row,
-  .info-row {
-    font-size: 13px;
-  }
-
-  .contact-logo {
-    width: 220px;
-    height: 220px;
+  .cw-section {
+    padding: 16px;
   }
 }
 
-@media (max-width: 480px) {
-  .contact-body {
-    padding: 20px 15px;
-  }
-
-  .contact-header h2 {
-    font-size: 18px;
-  }
-
-  .edit-input {
-    width: 80px;
-  }
-
-  .contact-logo {
-    width: 170px;
-    height: 170px;
-  }
-
-  .detail-row span,
-  .info-row span {
-    font-size: 12px;
-  }
+/* =========================
+   LEGACY
+   contactSave modal abhi purani class .sendd-btn use karta hoga.
+   Jab us modal ko redesign kar lo to ye block delete kar dena.
+========================= */
+.sendd-btn {
+  display: block;
+  margin-left: auto;
+  margin-top: 20px;
+  border: none;
+  border-radius: 10px;
+  padding: 8px 20px;
+  background: linear-gradient(135deg, #7758f9, #8c4de8);
+  color: white;
+  cursor: pointer;
+  box-shadow: 0 5px 15px rgba(119, 88, 249, 0.25);
+  transition: 0.2s;
 }
 
-
-.sent-menu-wrapper{
-  position: relative;
-}
-
-.reaction-panel {
-  position: absolute;
-
-  right: 40px;
-  top: 0;
-
-  display: flex;
-  gap: 6px;
-
-  background: #1b1b1b;
-
-  padding: 8px 10px;
-
-  border-radius: 20px;
-
-  box-shadow: 0 4px 12px rgba(0,0,0,.3);
-
-  z-index: 999;
-}
-
-
-.received-menu-wrapper{
-  position:relative;
-}
-
-
-.received-menu-wrapper .reaction-panel{
-  left:40px;
-  right:auto;
+.sendd-btn:hover {
+  box-shadow: 0 7px 18px rgba(119, 88, 249, 0.35);
 }

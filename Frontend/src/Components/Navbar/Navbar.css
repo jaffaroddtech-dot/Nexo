@@ -69,3 +69,69 @@
     height: 50px;
     width: 50px;
 }
+
+
+
+
+
+.app-main {
+  margin-left: 60px;
+  width: 100%;
+  min-width: 0;
+}
+
+@media (max-width: 768px) {
+  .app-main {
+    margin-left: 0;
+    box-sizing: border-box;
+    padding-bottom: calc(60px + env(safe-area-inset-bottom, 0px));
+    transition: padding-bottom 0.3s ease;
+  }
+
+  .sidebar {
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    height: calc(60px + env(safe-area-inset-bottom, 0px));
+    padding: 0 12px env(safe-area-inset-bottom, 0px);
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-around;
+    z-index: 100;
+    gap: 20px;
+    transition: transform 0.3s ease;
+  }
+
+  .sidebar-logo {
+    display: none;
+  }
+
+  .sidebar-list {
+    flex: 1;
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: center;
+    margin: 0;
+    gap: 0;
+  }
+
+  .sidebar-footer {
+    margin: 0;
+  }
+
+  .no-user {
+    width: 34px;
+    height: 34px;
+  }
+
+  /* chat khuli ho to navbar neeche slide hoke gayab */
+  body.chat-open .sidebar {
+    transform: translateY(100%);
+  }
+
+  body.chat-open .app-main {
+    padding-bottom: 0;
+  }
+}

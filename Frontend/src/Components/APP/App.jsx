@@ -8,6 +8,7 @@ import Signup from '../../Pages/Signup/Signup.jsx';
 import Home from "../../Pages/Home/Home.jsx";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import "./Toastify.css"
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import { SocketProvider } from "../../../SocketContext/sockectContext.jsx";
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -50,7 +51,7 @@ function App() {
   return (
     <SocketProvider> 
       <RouterProvider router={router} />
-      <ToastContainer position="top-right" autoClose={3000} />
+      <ToastContainer position="top-right" autoClose={3000} theme="dark" newestOnTop pauseOnFocusLoss={false}/>
     </SocketProvider> 
   )
 };

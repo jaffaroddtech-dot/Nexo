@@ -10,7 +10,7 @@ import { updateProfile, uploadProfilePic } from "../../../Apis/user";
 import "./UserPage.css";
 import { Pencil } from 'lucide-react';
 import ResetPassword from "../../Components/resetPassword/resetPassword";
-import {resetPassword} from "../../../Apis/auth";
+import { resetPassword } from "../../../Apis/auth";
 
 
 const UserPage = () => {
@@ -95,65 +95,87 @@ const UserPage = () => {
   };
 
   return (
-    <div className="user-page d-flex flex-column align-items-center justify-content-center p-4">
-      <form onSubmit={handleSubmit(onSubmit)} className="profile-card text-center d-flex gap-4">
-        <div className="userCard">
-          <h2 className="title">Account Details</h2>
-
-          <div className="infoGroup">
-            <label>Display Name:</label>
-            <input type="text" {...register("name", { required: "Name is required" })} />
-            {errors.name && <p className="error">{errors.name.message}</p>}
+    <div className="user-page">
+      <form onSubmit={handleSubmit(onSubmit)} className="profile-card">
+        {/* HERO */}
+        <div className="profile-hero">
+          <div className="profilepic-wrapper">
+            <img
+              src={user?.profilePic || defaultPic}
+              alt="profile"
+              className="profilepic"
+            />
+            <label htmlFor="fileInput" className="avatar-edit" aria-label="Change photo">
+              <Pencil size={14} />
+            </label>
+            <input
+              type="file"
+              id="fileInput"
+              accept="image/*"
+              hidden
+              onChange={onFileChange}
+            />
           </div>
 
-          <div className="infoGroup">
-            <label>Phone Number:</label>
-            <input type="text" {...register("phoneNumber")} disabled className="phone" />
+          <div className="hero-text">
+            <h2 className="hero-name">{user?.name}</h2>
+            <p className="hero-email">{user?.email}</p>
           </div>
-
-          <div className="infoGroup">
-            <label>Email:</label>
-            <input type="email" {...register("email")} disabled className="email" />
-          </div>
-
-          <div className="infoGroup">
-            <label>Country:</label>
-            <input type="text" {...register("country", { required: "Country is required" })} />
-            {errors.country && <p className="error">{errors.country.message}</p>}
-          </div>
-
-          <button type="submit" className="saveBtn">Save Changes</button>
         </div>
 
-        <div className="container-setting">
-          <div className="settingsCard">
-            <div className="profilepic-wrapper">
-              <img src={user?.profilePic || defaultPic} alt="profile" className="profilepic" />
-              <div className="overlay" onClick={() => document.getElementById("fileInput").click()}>
-                <Pencil/>
-              </div>
-              <input type="file" id="fileInput" style={{ display: "none" }} onChange={onFileChange} />
+        {/* ACCOUNT DETAILS */}
+        <div className="card-box">
+          <h3 className="card-title">Account Details</h3>
+
+          <div className="fields-grid">
+            <div className="infoGroup">
+              <label>Display Name</label>
+              <input type="text" {...register("name", { required: "Name is required" })} />
+              {errors.name && <p className="error">{errors.name.message}</p>}
             </div>
 
-            <h2 className="title m-0">Account Settings</h2>
-            <div className="section">
-              <h4 className="sectionTitle">Security</h4>
-              <button type="button" className="actionBtn" onClick={() => setOpenResetModal(true)}>
-                Change Password
-              </button>
-              <button type="button" className="actionBtn">Enable 2FA</button>
-              <button type="button" className="actionBtn" onClick={handleLogout}>Logout</button>
+            <div className="infoGroup">
+              <label>Country</label>
+              <input type="text" {...register("country", { required: "Country is required" })} />
+              {errors.country && <p className="error">{errors.country.message}</p>}
+            </div>
+
+            <div className="infoGroup">
+              <label>Phone Number</label>
+              <input type="text" {...register("phoneNumber")} disabled className="locked" />
+            </div>
+
+            <div className="infoGroup">
+              <label>Email</label>
+              <input type="email" {...register("email")} disabled className="locked" />
+            </div>
+
+            <div className="infoGroup full">
+              <label>Bio</label>
+              <input type="text" {...register("bio")} placeholder="Say something about yourself" />
             </div>
           </div>
 
-          <div className="section-status">
-            <h4 className="sectionTitle">Bio</h4>
-            <input type="text" {...register("bio")} className="statusInput" />
+          <div className="card-footer">
+            <button type="submit" className="saveBtn">Save Changes</button>
+          </div>
+        </div>
+
+        {/* SECURITY */}
+        <div className="card-box">
+          <h3 className="card-title">Security</h3>
+          <div className="action-row">
+            <button type="button" className="actionBtn" onClick={() => setOpenResetModal(true)}>
+              Change Password
+            </button>
+            <button type="button" className="actionBtn">Enable 2FA</button>
+            <button type="button" className="actionBtn danger" onClick={handleLogout}>
+              Logout
+            </button>
           </div>
         </div>
       </form>
 
-      {/* 👇 Reset Password Modal */}
       <ResetPassword
         isOpen={openResetModal}
         onClose={() => setOpenResetModal(false)}

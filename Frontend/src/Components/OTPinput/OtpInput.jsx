@@ -1,47 +1,64 @@
-import React, { useState, useRef } from "react";
-import "./otpInput.css";
+import React, { useRef, useEffect } from "react";
 
-const OtpInput = ({ length = 6, onComplete }) => {
-  const [otp, setOtp] = useState(Array(length).fill(""));
-  const inputsRef = useRef([]);
+const OtpInput = ({ value, onChange, length = 6, autoFocus = false }) => {
+  const refs = useRef([]);
+
+  useEffect(() => {
+    if (autoFocus) refs.current[0]?.focus();
+  }, [autoFocus]);
 
   const handleChange = (e, index) => {
-    const value = e.target.value.replace(/[^0-9]/g, ""); // sirf digits
-    if (!value) return;
-
-    const newOtp = [...otp];
-    newOtp[index] = value[0]; // ek digit hi allow
-    setOtp(newOtp);
-
-    // next box focus
-    if (index < length - 1) {
-      inputsRef.current[index + 1].focus();
-    }
-
-    // agar pura OTP fill ho gaya
-    if (newOtp.every((digit) => digit !== "")) {
-      onComplete(newOtp.join(""));
-    }
+    const digit = e.target.value.replace(/\D/g, "");
+    if (!digit) return;
+    const next = [...value];
+    next[index] = digit[digit.length - 1];
+    onChange(next);
+    if (index < length - 1) refs.current[index + 1]?.focus();
   };
 
   const handleKeyDown = (e, index) => {
-    if (e.key === "Backspace" && !otp[index] && index > 0) {
-      inputsRef.current[index - 1].focus();
+    if (e.key === "Backspace") {
+      const next = [...value];
+      if (value[index]) {
+        next[index] = "";
+        onChange(next);
+      } else if (index > 0) {
+        next[index - 1] = "";
+        onChange(next);
+        refs.current[index - 1]?.focus();
+      }
+    } else if (e.key === "ArrowLeft" && index > 0) {
+      refs.current[index - 1]?.focus();
+    } else if (e.key === "ArrowRight" && index < length - 1) {
+      refs.current[index + 1]?.focus();
     }
   };
 
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, length);
+    if (!pasted) return;
+    const next = Array(length).fill("");
+    pasted.split("").forEach((d, i) => (next[i] = d));
+    onChange(next);
+    refs.current[Math.min(pasted.length, length - 1)]?.focus();
+  };
+
   return (
-    <div className="otp-container">
-      {otp.map((digit, i) => (
+    <div className="rp-otp" onPaste={handlePaste}>
+      {value.map((digit, i) => (
         <input
           key={i}
           type="text"
-          maxLength="1"
+          inputMode="numeric"
+          autoComplete={i === 0 ? "one-time-code" : "off"}
+          maxLength={1}
           value={digit}
           onChange={(e) => handleChange(e, i)}
           onKeyDown={(e) => handleKeyDown(e, i)}
-          ref={(el) => (inputsRef.current[i] = el)}
-          className="otp-box"
+          onFocus={(e) => e.target.select()}
+          ref={(el) => (refs.current[i] = el)}
+          className={`rp-otp-box ${digit ? "filled" : ""}`}
         />
       ))}
     </div>

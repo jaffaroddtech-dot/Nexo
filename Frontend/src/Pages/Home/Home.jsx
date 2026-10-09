@@ -6,8 +6,9 @@ import { useSelector } from "react-redux";
 import { getConversation } from "../../../Apis/messages.js";
 import Nopfp from "../../Assets/nopfp.jpg";
 import ChatWindow from "../../Components/Chatwindow/Chatwindow.jsx";
-import { ChevronLeft } from "lucide-react"
+import { Search, SquarePen, MessageSquareText } from "lucide-react";
 import { useSocket } from "../../../SocketContext/sockectContext.jsx";
+import { formatChatTime } from "../../Helpers/Helper.js";
 
 const Home = () => {
   const { user } = useSelector((state) => state.auth);
@@ -16,12 +17,10 @@ const Home = () => {
   const [conversations, setConversations] = useState([]);
   const [selectedChat, setSelectedChat] = useState(null);
   const [search, setSearch] = useState("");
-  const [typingUsers, setTypingUsers] = useState({})
-  const [unreadMap, setUnreadMap] = useState({}); // ✅ { userId: true }
+  const [typingUsers, setTypingUsers] = useState({});
+  const [unreadMap, setUnreadMap] = useState({}); // { userId: count }
   const location = useLocation();
-  const [isMobile, setIsMobile] = useState(
-    window.innerWidth <= 768
-  );
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   useEffect(() => {
     if (location.state?.chatUser) {
@@ -29,13 +28,11 @@ const Home = () => {
     }
   }, [location.state]);
 
-
-  // mobile pe chat khuli ho to sidebar hide karne ke liye body pe class
+  // mobile pe chat khuli ho to navbar hide karne ke liye body pe class
   useEffect(() => {
     document.body.classList.toggle("chat-open", isMobile && !!selectedChat);
     return () => document.body.classList.remove("chat-open");
   }, [isMobile, selectedChat]);
-
 
   useEffect(() => {
     const handleResize = () => {
@@ -43,12 +40,7 @@ const Home = () => {
     };
 
     window.addEventListener("resize", handleResize);
-
-    return () =>
-      window.removeEventListener(
-        "resize",
-        handleResize
-      );
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   const fetchConversations = useCallback(async () => {
@@ -109,16 +101,13 @@ const Home = () => {
 
     const handleNewMessage = (message) => {
       const isRelevantToMe =
-        message.senderId === user._id ||
-        message.receiverId === user._id;
+        message.senderId === user._id || message.receiverId === user._id;
 
       if (isRelevantToMe) {
         updateConversationsWithMessage(message);
       }
 
-      const senderId =
-        message.senderId?.toString?.() ||
-        message.senderId;
+      const senderId = message.senderId?.toString?.() || message.senderId;
 
       if (senderId === user._id) return;
       if (senderId === selectedChat?._id) return;
@@ -129,66 +118,47 @@ const Home = () => {
       }));
     };
 
-    // ✅ Delete event
-    const handleMessageDeleted = ({
-      senderId,
-      receiverId,
-    }) => {
+    const handleMessageDeleted = ({ senderId, receiverId }) => {
       fetchConversations();
       const otherUserId =
-        String(senderId) === String(user._id)
-          ? receiverId
-          : senderId;
+        String(senderId) === String(user._id) ? receiverId : senderId;
 
       setConversations((prev) =>
         prev.map((conv) =>
           String(conv.user._id) === String(otherUserId)
-            ? {
-              ...conv,
-              lastMessage:
-                "🚫 This message was deleted",
-            }
+            ? { ...conv, lastMessage: "🚫 This message was deleted" }
             : conv
         )
       );
     };
-    const handleUserTyping = ({
-      senderId,
-    }) => {
+
+    const handleUserTyping = ({ senderId }) => {
       setTypingUsers((prev) => ({
         ...prev,
         [senderId]: true,
       }));
     };
 
-    const handleUserStopTyping = ({
-      senderId,
-    }) => {
+    const handleUserStopTyping = ({ senderId }) => {
       setTypingUsers((prev) => {
         const updated = { ...prev };
-
         delete updated[senderId];
-
         return updated;
       });
     };
 
-    const handleUserOffline = ({
-      userId,
-      lastSeen,
-    }) => {
-
+    const handleUserOffline = ({ userId, lastSeen }) => {
       setConversations((prev) =>
         prev.map((conv) =>
           conv.user._id === userId
             ? {
-              ...conv,
-              user: {
-                ...conv.user,
-                online: false,
-                lastSeen,
-              },
-            }
+                ...conv,
+                user: {
+                  ...conv.user,
+                  online: false,
+                  lastSeen,
+                },
+              }
             : conv
         )
       );
@@ -196,70 +166,29 @@ const Home = () => {
       setSelectedChat((prev) =>
         prev?._id === userId
           ? {
-            ...prev,
-            online: false,
-            lastSeen,
-          }
+              ...prev,
+              online: false,
+              lastSeen,
+            }
           : prev
       );
     };
 
-
-
-
     socket.on("newMessage", handleNewMessage);
-
-    socket.on(
-      "messageDeleted",
-      handleMessageDeleted
-    );
-    socket.on(
-      "userTyping",
-      handleUserTyping
-    );
-
-    socket.on(
-      "userStopTyping",
-      handleUserStopTyping
-    );
-
-    socket.on(
-      "userOffline",
-      handleUserOffline
-    );
+    socket.on("messageDeleted", handleMessageDeleted);
+    socket.on("userTyping", handleUserTyping);
+    socket.on("userStopTyping", handleUserStopTyping);
+    socket.on("userOffline", handleUserOffline);
 
     return () => {
-      socket.off(
-        "newMessage",
-        handleNewMessage
-      );
-
-      socket.off(
-        "userTyping",
-        handleUserTyping
-      );
-
-      socket.off(
-        "userStopTyping",
-        handleUserStopTyping
-      );
-
-      socket.off(
-        "messageDeleted",
-        handleMessageDeleted
-      );
-
-      socket.off(
-        "userOffline",
-        handleUserOffline
-      );
+      socket.off("newMessage", handleNewMessage);
+      socket.off("userTyping", handleUserTyping);
+      socket.off("userStopTyping", handleUserStopTyping);
+      socket.off("messageDeleted", handleMessageDeleted);
+      socket.off("userOffline", handleUserOffline);
     };
-  }, [
-    socket,
-    user,
-    selectedChat,
-    updateConversationsWithMessage,
-  ]);
+  }, [socket, user, selectedChat, updateConversationsWithMessage]);
+
   const handleSelectChat = (convUser) => {
     setSelectedChat(convUser);
     setUnreadMap((prev) => {
@@ -274,199 +203,133 @@ const Home = () => {
     return <HomeNot />;
   }
 
-  // ✅ "Unread" tab filter
+  // "Unread" tab filter
   const visibleConversations =
     selected === "unread"
       ? conversations.filter((conv) => unreadMap[conv.user._id])
       : conversations;
-
 
   const filteredConversations = visibleConversations.filter((conv) => {
     const name = conv.user.name?.toLowerCase() || "";
     const message = conv.lastMessage?.toLowerCase() || "";
     const query = search.toLowerCase();
 
-    return (
-      name.includes(query) ||
-      message.includes(query)
-    );
+    return name.includes(query) || message.includes(query);
   });
 
+  // kitni chats mein unread messages hain (tab badge ke liye)
+  const unreadTotal = Object.keys(unreadMap).length;
 
   return (
     <div className="Main">
       {(!isMobile || !selectedChat) && (
         <div className="messages-content">
-          <div className="p-4 border-bottom">
-            <h3 className="fw-bold mb-1">Chats</h3>
+          {/* HEADER */}
+          <div className="chats-header">
+            <div className="chats-title-row">
+              <h3 className="chats-title">Chats</h3>
+              <button type="button" className="new-button">
+                <SquarePen size={15} />
+                <span>New</span>
+              </button>
+            </div>
 
-            <small className="text-muted">
-              Select a conversation to get started
-            </small>
-
-            <div className="pt-2">
+            <div className="chat-search">
+              <Search size={16} />
               <input
-                className="search__input"
-                placeholder="Search Chats..."
+                placeholder="Search chats..."
                 value={search}
-                onChange={(e) =>
-                  setSearch(e.target.value)
-                }
+                onChange={(e) => setSearch(e.target.value)}
               />
             </div>
 
-            <div className="mt-3 d-flex align-items-center justify-content-between">
-              <div
-                className="radio-input"
-                style={{
-                  "--translate":
-                    selected === "all"
-                      ? "0%"
-                      : "100%",
-                }}
+            <div className="chat-tabs">
+              <button
+                type="button"
+                className={`chat-tab ${selected === "all" ? "is-active" : ""}`}
+                onClick={() => setSelected("all")}
               >
-                <label
-                  onClick={() =>
-                    setSelected("all")
-                  }
-                >
-                  <span
-                    className={
-                      selected === "all"
-                        ? "active"
-                        : ""
-                    }
-                  >
-                    All
-                  </span>
-                </label>
-
-                <label
-                  onClick={() =>
-                    setSelected("unread")
-                  }
-                >
-                  <span
-                    className={
-                      selected === "unread"
-                        ? "active"
-                        : ""
-                    }
-                  >
-                    Unread
-                  </span>
-                </label>
-
-                <div className="selection"></div>
-              </div>
-
-              <button className="new-button">
-                New Message
+                All
+              </button>
+              <button
+                type="button"
+                className={`chat-tab ${selected === "unread" ? "is-active" : ""}`}
+                onClick={() => setSelected("unread")}
+              >
+                Unread
+                {unreadTotal > 0 && <span className="tab-badge">{unreadTotal}</span>}
               </button>
             </div>
           </div>
 
-          <div className="messages-list mt-3">
-            {filteredConversations.length >
-              0 ? (
-              filteredConversations.map(
-                (conv) => {
-                  const unreadCount =
-                    unreadMap[
-                    conv.user._id
-                    ] || 0;
+          {/* LIST */}
+          <div className="messages-list">
+            {filteredConversations.length > 0 ? (
+              filteredConversations.map((conv) => {
+                const unreadCount = unreadMap[conv.user._id] || 0;
+                const isActive = selectedChat?._id === conv.user._id;
+                const isTyping = !!typingUsers[conv.user._id];
 
-                  return (
-                    <div
-                      key={conv.user._id}
-                      className="messages"
-                      onClick={() =>
-                        handleSelectChat(
-                          conv.user
-                        )
-                      }
-                    >
-                      <div className="profilePictures">
-                        <img
-                          src={conv.user.profilePic || Nopfp}
-                          alt="Profile"
-                          className="profile-image"
-                        />
-
-                        {onlineUsers.includes(conv.user._id) && (
-                          <span className="online-dot" />
-                        )}
-                      </div>
-
-                      <div className="message-content">
-                        <div className="message-header">
-                          <h6 className="message-sender mb-0">
-                            {
-                              conv.user
-                                .name
-                            }
-                          </h6>
-
-                          <span className="message-time">
-                            {new Date(
-                              conv.lastMessageTime
-                            ).toLocaleTimeString(
-                              [],
-                              {
-                                hour:
-                                  "2-digit",
-                                minute:
-                                  "2-digit",
-                              }
-                            )}
-                          </span>
-                        </div>
-
-                        <p
-                          className="message-text"
-                          style={
-                            typingUsers[
-                              conv.user._id
-                            ]
-                              ? {
-                                color: "#7758f9",
-                                fontStyle:
-                                  "italic",
-                              }
-                              : {}
-                          }
-                        >
-                          {typingUsers[
-                            conv.user._id
-                          ]
-                            ? "typing..."
-                            : conv.lastMessage}
-                        </p>
-                      </div>
-
-                      {unreadCount >
-                        0 && (
-                          <span className="unread-dot">
-                            {unreadCount >
-                              9
-                              ? "9+"
-                              : unreadCount}
-                          </span>
-                        )}
+                return (
+                  <div
+                    key={conv.user._id}
+                    role="button"
+                    tabIndex={0}
+                    className={`messages ${isActive ? "is-active" : ""} ${
+                      unreadCount > 0 ? "is-unread" : ""
+                    }`}
+                    onClick={() => handleSelectChat(conv.user)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSelectChat(conv.user)}
+                  >
+                    <div className="profilePictures">
+                      <img
+                        src={conv.user.profilePic || Nopfp}
+                        alt=""
+                        className="profile-image"
+                      />
+                      {onlineUsers.includes(conv.user._id) && (
+                        <span className="online-dot" />
+                      )}
                     </div>
-                  );
-                }
-              )
+
+                    <div className="message-content">
+                      <div className="message-header">
+                        <h6 className="message-sender">{conv.user.name}</h6>
+                        <span className="message-time">
+                          {formatChatTime(conv.lastMessageTime)}
+                        </span>
+                      </div>
+
+                      <div className="message-row">
+                        <p className={`message-text ${isTyping ? "is-typing" : ""}`}>
+                          {isTyping ? "typing..." : conv.lastMessage}
+                        </p>
+                        {unreadCount > 0 && (
+                          <span className="unread-dot">
+                            {unreadCount > 9 ? "9+" : unreadCount}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
             ) : (
-              <div className="no-contacts text-center">
-                <p className="text-muted">
-                  No conversations found
+              <div className="no-contacts">
+                <MessageSquareText size={34} />
+                <p>
+                  {search
+                    ? "No chats found"
+                    : selected === "unread"
+                    ? "no unread messages"
+                    : "no conversations yet"}
                 </p>
               </div>
             )}
           </div>
         </div>
       )}
+
       {(!isMobile || selectedChat) && (
         <div className="User-messages">
           <ChatWindow

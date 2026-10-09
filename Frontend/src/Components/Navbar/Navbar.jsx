@@ -27,7 +27,7 @@ const Navbar = () => {
       <div className="sidebar-footer">
         {user ? (
           <NavLink to="/user">
-            <img src={user.profilePic || defaultPic } alt="Profile" className="profile-image rounded-5" height={45} />
+            <img src={user.profilePic || defaultPic } alt="Profile" className="profile-nav-image rounded-5" height={45} />
           </NavLink>
         ) : (
           <NavLink to="/login"> <div className="no-user"></div> </NavLink>

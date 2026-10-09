@@ -16,7 +16,7 @@ function Layout() {
   return (
     <div className="App d-flex">
       <Navbar />
-      <main style={{ marginLeft: "60px", width: "100%" }}>
+      <main className="app-main">
         <Outlet />
       </main>
     </div>
