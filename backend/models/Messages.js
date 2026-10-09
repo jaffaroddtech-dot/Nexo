@@ -44,6 +44,18 @@ const messageSchema = new mongoose.Schema(
         },
       },
     ],
+    media: {
+      url: String,
+      publicId: String,
+      type: {
+        type: String,
+        enum: ["image", "video", "file"],
+      },
+    },
+    caption: {
+      type: String,
+      default: "",
+    },
   },
   { timestamps: true }
 );

@@ -3,34 +3,115 @@ const Contact = require("../models/Contact");
 const { getReceiverSocketId, getIO } = require("../Socket/socket");
 
 // --- SEND MESSAGE ---
+// exports.sendMessage = async (req, res) => {
+//     try {
+//         const senderId = req.user._id;
+//         const { receiverId, text, replyTo } = req.body;
+
+//         if (!text || !text.trim()) {
+//             return res.status(400).json({ status: false, message: "Message text is required" });
+//         }
+
+//         const newMessage = await Message.create({ senderId, receiverId, text, replyTo });
+
+
+//         const populatedMessage = await Message
+//             .findById(newMessage._id)
+//             .populate("replyTo", "text senderId isDeleted");
+
+//         // Realtime emit — agar receiver online hai
+//         const receiverSocketId = getReceiverSocketId(receiverId);
+//         if (receiverSocketId) {
+//             getIO().to(receiverSocketId).emit("newMessage", populatedMessage);
+//         }
+
+//         return res.status(201).json({ status: true, message: populatedMessage });
+//     } catch (error) {
+//         console.error("Send message error:", error);
+//         return res.status(500).json({ status: false, message: "Server error" });
+//     }
+// };
+
 exports.sendMessage = async (req, res) => {
     try {
         const senderId = req.user._id;
-        const { receiverId, text, replyTo } = req.body;
 
-        if (!text || !text.trim()) {
-            return res.status(400).json({ status: false, message: "Message text is required" });
+        const {
+            receiverId,
+            text,
+            replyTo,
+            caption
+        } = req.body;
+
+        let media = null;
+
+        if (req.file) {
+            media = {
+                url: req.file.path,
+                publicId: req.file.filename,
+                type: req.file.mimetype.startsWith("image")
+                    ? "image"
+                    : req.file.mimetype.startsWith("video")
+                        ? "video"
+                        : "file",
+            };
         }
 
-        const newMessage = await Message.create({ senderId, receiverId, text, replyTo });
+        // Na text hai na media
+        if (
+            (!text || !text.trim()) &&
+            !media
+        ) {
+            return res.status(400).json({
+                status: false,
+                message: "Message or media required",
+            });
+        }
 
+        const newMessage = await Message.create({
+            senderId,
+            receiverId,
+            text: text || "",
+            caption: caption || "",
+            media,
+            replyTo,
+        });
 
-        const populatedMessage = await Message
-            .findById(newMessage._id)
-            .populate("replyTo", "text senderId isDeleted");
+        const populatedMessage =
+            await Message.findById(
+                newMessage._id
+            ).populate(
+                "replyTo",
+                "text senderId isDeleted"
+            );
 
-        // Realtime emit — agar receiver online hai
-        const receiverSocketId = getReceiverSocketId(receiverId);
+        const receiverSocketId =
+            getReceiverSocketId(receiverId);
+
         if (receiverSocketId) {
-            getIO().to(receiverSocketId).emit("newMessage", populatedMessage);
+            getIO()
+                .to(receiverSocketId)
+                .emit(
+                    "newMessage",
+                    populatedMessage
+                );
         }
 
-        return res.status(201).json({ status: true, message: populatedMessage });
+        return res.status(201).json({
+            status: true,
+            message: populatedMessage,
+        });
     } catch (error) {
-        console.error("Send message error:", error);
-        return res.status(500).json({ status: false, message: "Server error" });
+        console.error(error);
+
+        return res.status(500).json({
+            status: false,
+            message: "Server error",
+        });
     }
 };
+
+
 
 // --- GET MESSAGES (ek user ke sath poori conversation) ---
 exports.getMessages = async (req, res) => {
