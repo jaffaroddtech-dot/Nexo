@@ -1,67 +1,51 @@
 const Message = require("../models/Messages");
 const Contact = require("../models/Contact");
+const cloudinary = require("../config/cloudinary");
 const { getReceiverSocketId, getIO } = require("../Socket/socket");
 
-// --- SEND MESSAGE ---
-// exports.sendMessage = async (req, res) => {
-//     try {
-//         const senderId = req.user._id;
-//         const { receiverId, text, replyTo } = req.body;
-
-//         if (!text || !text.trim()) {
-//             return res.status(400).json({ status: false, message: "Message text is required" });
-//         }
-
-//         const newMessage = await Message.create({ senderId, receiverId, text, replyTo });
-
-
-//         const populatedMessage = await Message
-//             .findById(newMessage._id)
-//             .populate("replyTo", "text senderId isDeleted");
-
-//         // Realtime emit — agar receiver online hai
-//         const receiverSocketId = getReceiverSocketId(receiverId);
-//         if (receiverSocketId) {
-//             getIO().to(receiverSocketId).emit("newMessage", populatedMessage);
-//         }
-
-//         return res.status(201).json({ status: true, message: populatedMessage });
-//     } catch (error) {
-//         console.error("Send message error:", error);
-//         return res.status(500).json({ status: false, message: "Server error" });
-//     }
-// };
 
 exports.sendMessage = async (req, res) => {
     try {
         const senderId = req.user._id;
 
-        const {
-            receiverId,
-            text,
-            replyTo,
-            caption
-        } = req.body;
+        // With multipart/form-data every field arrives as a string
+        const { receiverId, text, caption, duration } = req.body;
+        const replyTo =
+            req.body.replyTo && req.body.replyTo !== "null" && req.body.replyTo !== "undefined"
+                ? req.body.replyTo
+                : null;
 
-        let media = null;
+        if (!receiverId) {
+            return res.status(400).json({
+                status: false,
+                message: "receiverId is required",
+            });
+        }
+
+        let media;
 
         if (req.file) {
+            const mime = req.file.mimetype || "";
+
             media = {
                 url: req.file.path,
                 publicId: req.file.filename,
-                type: req.file.mimetype.startsWith("image")
+                type: mime.startsWith("image")
                     ? "image"
-                    : req.file.mimetype.startsWith("video")
+                    : mime.startsWith("video")
                         ? "video"
-                        : "file",
+                        : mime.startsWith("audio")
+                            ? "audio"
+                            : "file",
+                name: req.file.originalname,
+                size: req.file.size,
+                mimeType: mime,
+                duration: Number(duration) || 0,
             };
         }
 
-        // Na text hai na media
-        if (
-            (!text || !text.trim()) &&
-            !media
-        ) {
+        // Neither text nor media
+        if ((!text || !text.trim()) && !media) {
             return res.status(400).json({
                 status: false,
                 message: "Message or media required",
@@ -71,30 +55,21 @@ exports.sendMessage = async (req, res) => {
         const newMessage = await Message.create({
             senderId,
             receiverId,
-            text: text || "",
-            caption: caption || "",
+            text: text ? text.trim() : "",
+            caption: caption ? caption.trim() : "",
             media,
             replyTo,
         });
 
-        const populatedMessage =
-            await Message.findById(
-                newMessage._id
-            ).populate(
-                "replyTo",
-                "text senderId isDeleted"
-            );
+        const populatedMessage = await Message.findById(newMessage._id).populate(
+            "replyTo",
+            "text caption media senderId isDeleted"
+        );
 
-        const receiverSocketId =
-            getReceiverSocketId(receiverId);
+        const receiverSocketId = getReceiverSocketId(receiverId);
 
         if (receiverSocketId) {
-            getIO()
-                .to(receiverSocketId)
-                .emit(
-                    "newMessage",
-                    populatedMessage
-                );
+            getIO().to(receiverSocketId).emit("newMessage", populatedMessage);
         }
 
         return res.status(201).json({
@@ -145,7 +120,7 @@ exports.getConversations = async (req, res) => {
         const messages = await Message.find({
             $or: [
                 { senderId: myId },
-                { receiverId: myId }
+                { receiverId: myId },
             ],
             deletedFor: {
                 $nin: [myId],
@@ -167,7 +142,6 @@ exports.getConversations = async (req, res) => {
             owner: myId,
         });
 
-
         const contactsMap = new Map(
             contacts.map((contact) => [
                 contact.contactUser.toString(),
@@ -176,6 +150,48 @@ exports.getConversations = async (req, res) => {
         );
 
         const conversationsMap = new Map();
+
+        const getLastMessagePreview = (msg) => {
+            if (msg.isDeleted) {
+                return {
+                    text: "This message was deleted",
+                    type: "text",
+                };
+            }
+
+            if (msg.media?.type === "image") {
+                return {
+                    text: msg.caption?.trim() || "Photo",
+                    type: "image",
+                };
+            }
+
+            if (msg.media?.type === "video") {
+                return {
+                    text: msg.caption?.trim() || "Video",
+                    type: "video",
+                };
+            }
+
+            if (msg.media?.type === "file") {
+                return {
+                    text: msg.caption?.trim() || msg.media?.name || "Document",
+                    type: "file",
+                };
+            }
+
+            if (msg.media?.type === "audio") {
+                return {
+                    text: msg.caption?.trim() || "Voice Message",
+                    type: "audio",
+                };
+            }
+
+            return {
+                text: msg.text || "",
+                type: "text",
+            };
+        };
 
         messages.forEach((msg) => {
             const otherUser =
@@ -186,8 +202,9 @@ exports.getConversations = async (req, res) => {
             const otherUserId = otherUser._id.toString();
 
             if (!conversationsMap.has(otherUserId)) {
-                const savedName =
-                    contactsMap.get(otherUserId);
+                const savedName = contactsMap.get(otherUserId);
+
+                const preview = getLastMessagePreview(msg);
 
                 conversationsMap.set(otherUserId, {
                     user: {
@@ -195,9 +212,8 @@ exports.getConversations = async (req, res) => {
                         name: savedName || otherUser.name,
                     },
 
-                    lastMessage: msg.isDeleted
-                        ? "🚫 This message was deleted"
-                        : msg.text,
+                    lastMessage: preview.text,
+                    lastMessageType: preview.type,
 
                     lastMessageTime: msg.createdAt,
 
@@ -210,16 +226,13 @@ exports.getConversations = async (req, res) => {
                 msg.seen === false
             ) {
                 const conversation = conversationsMap.get(otherUserId);
-
                 conversation.unreadCount += 1;
             }
         });
 
         return res.status(200).json({
             status: true,
-            conversations: Array.from(
-                conversationsMap.values()
-            ),
+            conversations: Array.from(conversationsMap.values()),
         });
     } catch (error) {
         console.error("Get Conversations Error:", error);
@@ -230,7 +243,6 @@ exports.getConversations = async (req, res) => {
         });
     }
 };
-
 
 // --- MARK MESSAGES AS SEEN ---
 exports.markAsSeen = async (req, res) => {
@@ -280,26 +292,64 @@ exports.deleteForEveryone = async (req, res) => {
         const { messageId } = req.params;
 
         const message = await Message.findById(messageId);
+
         if (!message) {
-            return res.status(404).json({ status: false, message: "Message not found" });
+            return res.status(404).json({
+                status: false,
+                message: "Message not found",
+            });
         }
 
         if (message.senderId.toString() !== userId.toString()) {
-            return res.status(403).json({ status: false, message: "Not allowed" });
+            return res.status(403).json({
+                status: false,
+                message: "Not allowed",
+            });
+        }
+
+        // Delete media from Cloudinary
+        if (message.media?.publicId) {
+            await cloudinary.uploader.destroy(
+                message.media.publicId,
+                {
+                    resource_type:
+                        message.media.type === "image"
+                            ? "image"
+                            : message.media.type === "file"
+                                ? "raw"
+                                : "video",
+                }
+            );
         }
 
         message.isDeleted = true;
+        message.media = null;
+        message.text = "";
+        message.caption = "";
+
         await message.save();
 
         const receiverSocketId = getReceiverSocketId(message.receiverId);
+
         if (receiverSocketId) {
-            getIO().to(receiverSocketId).emit("messageDeleted", { messageId: message._id });
+            getIO()
+                .to(receiverSocketId)
+                .emit("messageDeleted", {
+                    messageId: message._id,
+                });
         }
 
-        return res.status(200).json({ status: true, message: "Deleted for everyone" });
+        return res.status(200).json({
+            status: true,
+            message: "Deleted for everyone",
+        });
     } catch (error) {
         console.error("Delete for everyone error:", error);
-        return res.status(500).json({ status: false, message: "Server error" });
+
+        return res.status(500).json({
+            status: false,
+            message: "Server error",
+        });
     }
 };
 

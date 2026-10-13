@@ -44,17 +44,18 @@ const messageSchema = new mongoose.Schema(
         },
       },
     ],
-    media: {
-      url: String,
-      publicId: String,
-      type: {
-        type: String,
-        enum: ["image", "video", "file"],
-      },
-    },
     caption: {
       type: String,
       default: "",
+    },
+    media: {
+      url: String,
+      publicId: String,
+      type: { type: String, enum: ["image", "video", "audio", "file"] },
+      name: String,
+      size: Number,
+      mimeType: String,
+      duration: Number, // seconds (voice messages)
     },
   },
   { timestamps: true }
