@@ -1,8 +1,13 @@
 import requests from "../utils/axios";
 
 
-export const sendMessage = async (data) => {
-    const res = await requests.post("/messages/send", data);
+export const sendMessage = async (data, onUploadProgress) => {
+    const isForm = typeof FormData !== "undefined" && data instanceof FormData;
+
+    const res = await requests.post("/messages/send", data, {
+        ...(isForm ? { headers: { "Content-Type": "multipart/form-data" } } : {}),
+        onUploadProgress,
+    });
     return res;
 };
 export const getMessages = async (id) => {
@@ -22,10 +27,10 @@ export const deleteMessageForMe = async (messageId) => {
     return res;
 };
 export const deleteMessageForEveryone = async (messageId) => {
-  const res = await requests.delete(`/messages/delete-for-everyone/${messageId}`);
-  return res;
+    const res = await requests.delete(`/messages/delete-for-everyone/${messageId}`);
+    return res;
 };
-export const reactToMessage = async (messageId,emoji) => {
-    const res = await requests.patch(`messages/react/${messageId}`,{emoji});
+export const reactToMessage = async (messageId, emoji) => {
+    const res = await requests.patch(`messages/react/${messageId}`, { emoji });
     return res;
 }

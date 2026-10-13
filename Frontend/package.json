@@ -17,6 +17,7 @@
     "axios": "^1.18.1",
     "bootstrap": "^5.3.8",
     "crypto-js": "^4.2.0",
+    "emoji-picker-react": "^5.0.0",
     "firebase": "^12.18.0",
     "firebase-admin": "^14.3.0",
     "lucide-react": "^1.25.0",

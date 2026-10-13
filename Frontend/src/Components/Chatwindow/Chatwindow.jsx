@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useState } from "react";
 import "./Chatwindow.css";
-import useChatWindow from "./chatsComponents/useChatwindow";
-import ChatHeader from "./chatsComponents/ChatHeader";
-import SentMessage from "./chatsComponents/SentMessage";
-import ReceivedMessage from "./chatsComponents/ReceivedMessage";
-import MessageInput from "./chatsComponents/MessageInput";
+import useChatWindow from "./chatsComponents/Usechatwindow";
+import ChatHeader from "./chatsComponents/Chatheader";
+import SentMessage from "./chatsComponents/Sentmessage";
+import ReceivedMessage from "./chatsComponents/Receivedmessage";
+import MessageInput from "./chatsComponents/Messageinput";
+import MediaPreview from "./chatsComponents/Mediapreview";
 
 const ChatWindow = ({ chatUser, onMessageSent, onBack }) => {
   const {
@@ -25,7 +26,22 @@ const ChatWindow = ({ chatUser, onMessageSent, onBack }) => {
     handleDeleteForMe,
     handleDeleteForEveryone,
     handleReaction,
+    attachment,
+    caption,
+    setCaption,
+    uploading,
+    uploadProgress,
+    uploadError,
+    selectFile,
+    clearAttachment,
+    handleSendMedia,
+    handleMediaLoad,
+    handleSendVoice,
+    voiceSending,
   } = useChatWindow(chatUser, onMessageSent);
+
+  // drag & drop highlight (must be above the early return - hooks rule)
+  const [dragging, setDragging] = useState(false);
 
   // EMPTY CHAT
   if (!chatUser) {
@@ -53,8 +69,34 @@ const ChatWindow = ({ chatUser, onMessageSent, onBack }) => {
     onDeleteForMe: handleDeleteForMe,
   };
 
+  const hasFiles = (e) => Array.from(e.dataTransfer?.types || []).includes("Files");
+
+  const onDragOver = (e) => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    setDragging(true);
+  };
+
+  const onDragLeave = (e) => {
+    // ignore leave events fired when moving over child elements
+    if (!e.currentTarget.contains(e.relatedTarget)) setDragging(false);
+  };
+
+  const onDrop = (e) => {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    setDragging(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) selectFile(file);
+  };
+
   return (
-    <div className="chat-window">
+    <div
+      className={`chat-window ${dragging ? "dragging" : ""}`}
+      onDragOver={onDragOver}
+      onDragLeave={onDragLeave}
+      onDrop={onDrop}
+    >
       <ChatHeader
         chatUser={chatUser}
         isTyping={isTyping}
@@ -62,7 +104,11 @@ const ChatWindow = ({ chatUser, onMessageSent, onBack }) => {
         onBack={onBack}
       />
 
-      <div className="chat-body">
+      <div
+        className="chat-body"
+        onLoadCapture={handleMediaLoad}
+        onLoadedMetadataCapture={handleMediaLoad}
+      >
         {messages.map((msg, index) =>
           msg.senderId === user._id ? (
             <SentMessage
@@ -75,7 +121,13 @@ const ChatWindow = ({ chatUser, onMessageSent, onBack }) => {
               {...shared}
             />
           ) : (
-            <ReceivedMessage key={msg._id} msg={msg} user={user} chatUser={chatUser} {...shared} />
+            <ReceivedMessage
+              key={msg._id}
+              msg={msg}
+              user={user}
+              chatUser={chatUser}
+              {...shared}
+            />
           )
         )}
 
@@ -90,12 +142,31 @@ const ChatWindow = ({ chatUser, onMessageSent, onBack }) => {
         <div ref={bottomRef} />
       </div>
 
+      {/* key remounts the input when switching chats, which discards any
+          in-progress recording so it can never go to the wrong person */}
       <MessageInput
+        key={chatUser._id}
         text={text}
         onChange={handleInputChange}
         onSend={handleSend}
         replyMessage={replyMessage}
         onCancelReply={() => setReplyMessage(null)}
+        onSelectFile={selectFile}
+        onSendVoice={handleSendVoice}
+        voiceSending={voiceSending}
+      />
+
+      {dragging && <div className="drop-overlay">Drop a file to send</div>}
+
+      <MediaPreview
+        attachment={attachment}
+        caption={caption}
+        setCaption={setCaption}
+        uploading={uploading}
+        progress={uploadProgress}
+        error={uploadError}
+        onSend={handleSendMedia}
+        onCancel={clearAttachment}
       />
     </div>
   );

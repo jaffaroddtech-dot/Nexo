@@ -2,7 +2,7 @@
 
 import React from 'react';
 import './Navbar.css';
-import {Inbox, CircleFadingPlus, Contact} from 'lucide-react';
+import { Inbox, CircleFadingPlus, Contact, User } from 'lucide-react';
 import logo from '../../assets/logo.png';
 import pfp from '../../assets/images.jpg';
 import { NavLink } from "react-router-dom";
@@ -27,10 +27,12 @@ const Navbar = () => {
       <div className="sidebar-footer">
         {user ? (
           <NavLink to="/user">
-            <img src={user.profilePic || defaultPic } alt="Profile" className="profile-nav-image rounded-5" height={45} />
+            <img src={user.profilePic || defaultPic} alt="Profile" className="profile-nav-image rounded-5" height={45} />
           </NavLink>
         ) : (
-          <NavLink to="/login"> <div className="no-user"></div> </NavLink>
+          <NavLink to="/login" aria-label="Log in">
+            <div className="no-user"><User size={22} /></div>
+          </NavLink>
         )}
       </div>
     </div>

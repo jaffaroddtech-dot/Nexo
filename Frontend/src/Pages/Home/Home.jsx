@@ -6,10 +6,9 @@ import { useSelector } from "react-redux";
 import { getConversation } from "../../../Apis/messages.js";
 import Nopfp from "../../Assets/nopfp.jpg";
 import ChatWindow from "../../Components/Chatwindow/Chatwindow.jsx";
-import { Search, SquarePen, MessageSquareText } from "lucide-react";
+import { Search, SquarePen, MessageSquareText, Image, Video, FileText, Mic } from "lucide-react";
 import { useSocket } from "../../../SocketContext/sockectContext.jsx";
-import { formatChatTime } from "../../Helpers/Helper.js";
-
+import { formatChatTime, getConversationPreview } from "../../Helpers/Helper.js";
 const Home = () => {
   const { user } = useSelector((state) => state.auth);
   const { socket, onlineUsers } = useSocket();
@@ -72,19 +71,39 @@ const Home = () => {
 
   const updateConversationsWithMessage = useCallback(
     (message) => {
+
+      const senderId =
+        typeof message.senderId === "object"
+          ? message.senderId._id
+          : message.senderId;
+
+      const receiverId =
+        typeof message.receiverId === "object"
+          ? message.receiverId._id
+          : message.receiverId;
+
       const otherUserId =
-        message.senderId === user._id ? message.receiverId : message.senderId;
+        String(senderId) === String(user._id)
+          ? String(receiverId)
+          : String(senderId);
 
       setConversations((prev) => {
-        const existingIndex = prev.findIndex((c) => c.user._id === otherUserId);
+        const existingIndex = prev.findIndex(
+          (c) => String(c.user._id) === String(otherUserId)
+        );
 
         if (existingIndex !== -1) {
           const updated = [...prev];
           const [conv] = updated.splice(existingIndex, 1);
+
+          const preview = getConversationPreview(message);
+
           const updatedConv = {
             ...conv,
-            lastMessage: message.text,
-            lastMessageTime: message.createdAt || new Date().toISOString(),
+            lastMessage: preview.text,
+            lastMessageType: preview.type,
+            lastMessageTime:
+              message.createdAt || new Date().toISOString(),
           };
           return [updatedConv, ...updated];
         }
@@ -152,13 +171,13 @@ const Home = () => {
         prev.map((conv) =>
           conv.user._id === userId
             ? {
-                ...conv,
-                user: {
-                  ...conv.user,
-                  online: false,
-                  lastSeen,
-                },
-              }
+              ...conv,
+              user: {
+                ...conv.user,
+                online: false,
+                lastSeen,
+              },
+            }
             : conv
         )
       );
@@ -166,10 +185,10 @@ const Home = () => {
       setSelectedChat((prev) =>
         prev?._id === userId
           ? {
-              ...prev,
-              online: false,
-              lastSeen,
-            }
+            ...prev,
+            online: false,
+            lastSeen,
+          }
           : prev
       );
     };
@@ -275,9 +294,8 @@ const Home = () => {
                     key={conv.user._id}
                     role="button"
                     tabIndex={0}
-                    className={`messages ${isActive ? "is-active" : ""} ${
-                      unreadCount > 0 ? "is-unread" : ""
-                    }`}
+                    className={`messages ${isActive ? "is-active" : ""} ${unreadCount > 0 ? "is-unread" : ""
+                      }`}
                     onClick={() => handleSelectChat(conv.user)}
                     onKeyDown={(e) => e.key === "Enter" && handleSelectChat(conv.user)}
                   >
@@ -301,9 +319,26 @@ const Home = () => {
                       </div>
 
                       <div className="message-row">
-                        <p className={`message-text ${isTyping ? "is-typing" : ""}`}>
-                          {isTyping ? "typing..." : conv.lastMessage}
-                        </p>
+                        <div className={`message-text ${isTyping ? "is-typing" : ""}`}>
+                          {!isTyping && conv.lastMessageType === "image" && (
+                            <Image size={14} />
+                          )}
+
+                          {!isTyping && conv.lastMessageType === "video" && (
+                            <Video size={14} />
+                          )}
+
+                          {!isTyping && conv.lastMessageType === "file" && (
+                            <FileText size={14} />
+                          )}
+                          {!isTyping && conv.lastMessageType === "audio" && (
+                            <Mic size={14} />
+                          )}
+
+                          <span>
+                            {isTyping ? "typing..." : conv.lastMessage}
+                          </span>
+                        </div>
                         {unreadCount > 0 && (
                           <span className="unread-dot">
                             {unreadCount > 9 ? "9+" : unreadCount}
@@ -321,25 +356,28 @@ const Home = () => {
                   {search
                     ? "No chats found"
                     : selected === "unread"
-                    ? "no unread messages"
-                    : "no conversations yet"}
+                      ? "no unread messages"
+                      : "no conversations yet"}
                 </p>
               </div>
             )}
           </div>
         </div>
-      )}
+      )
+      }
 
-      {(!isMobile || selectedChat) && (
-        <div className="User-messages">
-          <ChatWindow
-            chatUser={selectedChat}
-            onMessageSent={fetchConversations}
-            onBack={isMobile ? () => setSelectedChat(null) : undefined}
-          />
-        </div>
-      )}
-    </div>
+      {
+        (!isMobile || selectedChat) && (
+          <div className="User-messages">
+            <ChatWindow
+              chatUser={selectedChat}
+              onMessageSent={updateConversationsWithMessage}
+              onBack={isMobile ? () => setSelectedChat(null) : undefined}
+            />
+          </div>
+        )
+      }
+    </div >
   );
 };
 

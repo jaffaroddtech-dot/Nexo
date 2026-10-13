@@ -1,0 +1,270 @@
+/* ==========================================================
+   NEXO: DARK PURPLE THEME FOR PRE-LOGIN PAGES
+   Login, Signup, Home / Status / Contacts (not logged in)
+   Import AFTER the page CSS files so these rules win.
+========================================================== */
+
+/* ---------- page + header ---------- */
+.nexo-page {
+  background-color: #0f1024;
+}
+
+.nexo-header {
+  background-color: #1a1c3e;
+  border-bottom: 1px solid #2a2d4a;
+}
+
+/* ---------- card ---------- */
+.nexo-card {
+  background-color: #1a1c3e;
+  border: 1px solid #2a2d4a;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.nexo-title {
+  color: #fff;
+}
+
+.nexo-subtitle,
+.nexo-footer-text,
+.nexo-check-label {
+  color: #8d8fa6;
+}
+
+.nexo-label {
+  color: #e6e3ff;
+}
+
+/* ---------- inputs ---------- */
+.nexo-input {
+  background-color: #0f1024;
+  border: 1px solid #2a2d4a !important;
+  color: #fff;
+}
+
+.nexo-input::placeholder {
+  color: #6f7190;
+}
+
+.nexo-input:focus {
+  background-color: #0f1024;
+  color: #fff;
+  border-color: #7758f9 !important;
+  box-shadow: 0 0 0 0.2rem rgba(119, 88, 249, 0.2);
+}
+
+/* browser autofill ka white/yellow background hatao */
+.nexo-input:-webkit-autofill,
+.nexo-input:-webkit-autofill:hover,
+.nexo-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #fff;
+  -webkit-box-shadow: 0 0 0 1000px #0f1024 inset;
+  caret-color: #fff;
+  transition: background-color 9999s ease-in-out 0s;
+}
+
+/* Show / Hide button */
+.nexo-toggle-btn,
+.nexo-toggle-btnn {
+  color: #8d8fa6;
+}
+
+.nexo-toggle-btn:hover,
+.nexo-toggle-btnn:hover {
+  color: #fff;
+}
+
+/* ---------- links ---------- */
+.nexo-link {
+  color: #9a8bff;
+  cursor: pointer;
+}
+
+.nexo-link:hover {
+  color: #c9bdff;
+}
+
+/* ---------- primary button (chat ke Send button jaisa) ---------- */
+.nexo-btn-primary {
+  background-color: #7758f9;
+  color: #fff;
+  transition: background-color 0.2s ease;
+}
+
+.nexo-btn-primary:hover {
+  background-color: #6747d8;
+  color: #fff;
+}
+
+/* ---------- divider + social buttons ---------- */
+.nexo-divider-line {
+  background-color: #2a2d4a;
+}
+
+.nexo-divider-text {
+  color: #8d8fa6;
+}
+
+.nexo-btn-social {
+  background-color: #0f1024;
+  border: 1px solid #2a2d4a;
+  color: #fff;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.nexo-btn-social:hover {
+  background-color: #1e1e3a;
+  border-color: #7758f9;
+  color: #fff;
+}
+
+/* ---------- checkbox (bootstrap override) ---------- */
+.form-check-input {
+  background-color: #0f1024;
+  border: 1px solid #3a3d5c;
+}
+
+.form-check-input:focus {
+  border-color: #7758f9;
+  box-shadow: 0 0 0 0.2rem rgba(119, 88, 249, 0.2);
+}
+
+.form-check-input:checked {
+  background-color: #7758f9;
+  border-color: #7758f9;
+}
+
+/* ---------- validation errors ---------- */
+.error {
+  color: #ff7a90 !important;
+}
+
+
+/* ==========================================================
+   LOGGED-OUT EMPTY STATES
+   (Home = no suffix, Status = -2, Contacts = -3)
+========================================================== */
+
+.not-logged-main,
+.not-logged-main-2,
+.not-logged-main-3 {
+  background-color: #0f1024;
+}
+
+.welcome h1,
+.welcome-2 h1,
+.welcome-3 h1 {
+  color: #fff;
+}
+
+.welcome span,
+.welcome-2 span,
+.welcome-3 span {
+  color: #8d8fa6;
+}
+
+/* "Nexo" word in the heading */
+.welcome h1 span,
+.welcome-2 h1 span,
+.welcome-3 h1 span {
+  color: #9a8bff;
+}
+
+
+/* ==========================================================
+   ICON TILE (3D images ki jagah icon)
+   Home = .logo, Status = .logo-2, Contacts = .logo-3
+========================================================== */
+
+.logo,
+.logo-2,
+.logo-3 {
+  background-image: none !important;
+  width: 96px;
+  height: 96px;
+  margin-bottom: 18px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background-color: #1e1e3a;
+  border: 1px solid #2a2d4a;
+  border-radius: 24px;
+  color: #9a8bff;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+}
+
+.logo svg,
+.logo-2 svg,
+.logo-3 svg {
+  width: 44px;
+  height: 44px;
+}
+
+.welcome h1,
+.welcome-2 h1,
+.welcome-3 h1 {
+  font-size: 44px;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.welcome span,
+.welcome-2 span,
+.welcome-3 span {
+  font-size: 17px;
+  max-width: 460px;
+}
+
+.main-button,
+.main-button-2,
+.main-button-3 {
+  padding: 0.65rem 1.5rem;
+}
+
+
+
+.no-user {
+  background-image: none !important;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #1e1e3a;
+  border: 1px solid #2a2d4a;
+  color: #9a8bff;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.no-user:hover {
+  border-color: #7758f9;
+  color: #c9bdff;
+}
+
+
+.sidebar-list a {
+  color: #8d8fa6;
+  transition: color 0.15s ease;
+}
+
+.sidebar-list a:hover {
+  color: #c9bdff;
+}
+
+.sidebar-list a.active-link {
+  color: #7758f9;
+}
+
+/* click ke baad jo white box (focus outline) dikhta hai, wo hatao */
+.sidebar-list a:focus {
+  outline: none;
+}
+
+.sidebar-list a:focus-visible {
+  outline: 2px solid #7758f9;
+  outline-offset: 4px;
+  border-radius: 10px;
+}

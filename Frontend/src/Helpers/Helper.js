@@ -77,3 +77,38 @@ export const formatChatTime = (date) => {
   if (diffDays < 7) return d.toLocaleDateString([], { weekday: "short" });
   return d.toLocaleDateString([], { day: "2-digit", month: "short" });
 };
+
+export const getConversationPreview = (message) => {
+  if (message.media?.type === "image") {
+    return {
+      type: "image",
+      text: message.caption?.trim() || "Photo",
+    };
+  }
+
+  if (message.media?.type === "video") {
+    return {
+      type: "video",
+      text: message.caption?.trim() || "Video",
+    };
+  }
+
+  if (message.media?.type === "file") {
+    return {
+      type: "file",
+      text: message.caption?.trim() || message.media.name || "Document",
+    };
+  }
+
+  if (message.media?.type === "audio") {
+    return {
+      type: "audio",
+      text: message.caption?.trim() || "Voice message",
+    };
+  }
+
+  return {
+    type: "text",
+    text: message.text || "",
+  };
+};
