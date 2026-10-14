@@ -34,3 +34,7 @@ export const reactToMessage = async (messageId, emoji) => {
     const res = await requests.patch(`messages/react/${messageId}`, { emoji });
     return res;
 }
+export const searchUserByPhone = async (phone) => {
+    const res = await requests.get(`/messages/search-user/${phone}`);
+    return res;
+}

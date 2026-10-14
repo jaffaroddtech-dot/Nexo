@@ -713,3 +713,362 @@
     animation: none;
   }
 }
+
+
+/* =====================================================
+   APPEND THIS TO Status.css
+   Put it ABOVE your "RESPONSIVE" block so media queries still win.
+===================================================== */
+
+/* avatars that use a profile picture */
+img.st-avatar,
+img.st-av {
+  object-fit: cover;
+  display: block;
+}
+
+.st-av-lg {
+  width: 42px;
+  height: 42px;
+  font-size: 14px;
+}
+
+/* small round action inside a list row */
+.st-mini-btn {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  color: #b9a8ff;
+  background: rgba(119, 88, 249, 0.14);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+
+.st-mini-btn:hover {
+  color: #fff;
+  background: #7758f9;
+}
+
+.st-retry {
+  padding: 8px 16px;
+  border: 1px solid #2a2c55;
+  border-radius: 999px;
+  font-size: 13px;
+  color: #fff;
+  background: transparent;
+  cursor: pointer;
+}
+
+.st-retry:hover {
+  border-color: #7758f9;
+}
+
+/* spinner */
+.st-spin {
+  animation: stSpin 0.9s linear infinite;
+}
+
+@keyframes stSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* photo / video layer (viewer + composer preview) */
+.st-media {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #05060f;
+}
+
+.st-media-loader {
+  position: absolute;
+  z-index: 2;
+  color: #fff;
+}
+
+/* caption that sits over a photo / video */
+.st-caption-media {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 78px;
+  z-index: 3;
+  padding: 36px 20px 14px;
+  font-size: 16px;
+  font-weight: 500;
+  pointer-events: none;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.65), transparent);
+}
+
+/* top + bottom scrims so white controls stay readable on bright media */
+.st-slide::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 110px;
+  z-index: 3;
+  pointer-events: none;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.4), transparent);
+}
+
+.st-liked {
+  color: #7758f9 !important;
+}
+
+/* viewer count (my status) */
+.st-views {
+  position: absolute;
+  bottom: 22px;
+  left: 50%;
+  z-index: 5;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 16px;
+  transform: translateX(-50%);
+  border: none;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(11, 12, 30, 0.55);
+  cursor: pointer;
+}
+
+.st-views:hover {
+  background: rgba(11, 12, 30, 0.8);
+}
+
+/* viewers bottom sheet */
+.st-sheet-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: flex;
+  align-items: flex-end;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.st-sheet {
+  width: 100%;
+  max-height: 60%;
+  display: flex;
+  flex-direction: column;
+  border-radius: 18px 18px 0 0;
+  background: #121330;
+  animation: stSheet 0.2s ease-out;
+}
+
+.st-sheet-head {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px 8px;
+}
+
+.st-sheet-head h6 {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.st-sheet-list {
+  overflow-y: auto;
+  padding: 0 8px 16px;
+}
+
+.st-sheet-empty {
+  margin: 0;
+  padding: 18px 12px;
+  font-size: 14px;
+  color: #8d8fa6;
+}
+
+.st-viewer-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px;
+}
+
+@keyframes stSheet {
+  from { transform: translateY(24px); opacity: 0; }
+  to   { transform: translateY(0); opacity: 1; }
+}
+
+/* composer: tabs, picker, caption, error */
+.st-tabs {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  border-radius: 999px;
+  background: rgba(11, 12, 30, 0.45);
+}
+
+.st-tabs button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.75);
+  background: transparent;
+  cursor: pointer;
+}
+
+.st-tabs button.on {
+  color: #fff;
+  background: #7758f9;
+}
+
+.st-round-spacer {
+  width: 32px;
+  height: 32px;
+}
+
+.st-pick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 28px 34px;
+  border: 2px dashed rgba(255, 255, 255, 0.35);
+  border-radius: 18px;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.st-pick small {
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.st-pick:hover {
+  border-color: #b9a8ff;
+}
+
+.st-caption-input {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 84px;
+  z-index: 5;
+  box-sizing: border-box;
+  padding: 11px 16px;
+  font-size: 14px;
+  color: #fff;
+  background: rgba(11, 12, 30, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 999px;
+  outline: none;
+}
+
+.st-caption-input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.st-caption-input:focus {
+  border-color: #fff;
+}
+
+.st-error {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 132px;
+  z-index: 6;
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  text-align: center;
+  color: #fff;
+  background: rgba(220, 38, 38, 0.85);
+}
+
+/* mobile tweaks (put inside your existing @media (max-width: 768px) block) */
+@media (max-width: 768px) {
+  .st-caption-input {
+    font-size: 16px;
+    bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .st-views {
+    bottom: calc(22px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .st-error {
+    bottom: calc(132px + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+
+.st-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  background: rgba(0, 0, 0, 0.65);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.st-modal {
+  width: 350px;
+  max-width: 90%;
+  background: #121330;
+  border-radius: 16px;
+  padding: 20px;
+  color: white;
+}
+
+.st-modal h3 {
+  margin: 0 0 10px;
+}
+
+.st-modal p {
+  margin: 0;
+  color: #b8b8c8;
+}
+
+.st-modal-actions {
+  margin-top: 20px;
+
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.st-modal-cancel {
+  border: none;
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+
+  background: #232549;
+  color: white;
+}
+
+.st-modal-delete {
+  border: none;
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+
+  background: #e63946;
+  color: white;
+}

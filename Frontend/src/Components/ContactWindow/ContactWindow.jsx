@@ -13,7 +13,9 @@ import {
   Mail,
   MessageCircleMore,
   ChevronLeft,
+  Contact
 } from "lucide-react";
+import EmptyState from "../emptyState/EmptyState";
 import { removeContactState, updateContactState } from "../../features/contactSlice";
 import { deleteContact, updateContact } from "../../../Apis/contact";
 import { useDispatch, useSelector } from "react-redux";
@@ -53,15 +55,17 @@ const ContactWindow = ({ contactId, onDeleted, onBack }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // EMPTY
-  if (!contact) {
-    return (
-      <div className="cw-empty">
-        <div className="contact-logo"></div>
-        <h2>Select a contact to view details</h2>
-      </div>
-    );
-  }
+
+
+if (!contact) {
+  return (
+    <EmptyState
+      icon={<Contact />}
+      title="Select a contact"
+      subtitle="Choose a contact from the list to view their details."
+    />
+  );
+}
 
   const u = contact.contactUser || {};
 

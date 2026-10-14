@@ -1,0 +1,76 @@
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+
+.empty-state {
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #fff;
+}
+
+.empty-state-area {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  max-width: 480px;
+  width: 100%;
+}
+
+.empty-state-icon {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #3a3490, #2a2670);
+  border: 1px solid #4a43b0;
+  color: #cfc6ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 40px rgba(108, 93, 251, 0.25);
+}
+
+.empty-state-icon svg {
+  width: 46px;
+  height: 46px;
+  stroke-width: 1.6;
+}
+
+.empty-state-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin-top: 18px;
+}
+
+.empty-state-text h1 {
+  font-family: "Bebas Neue", sans-serif;
+  font-weight: 400;
+  font-size: clamp(28px, 4vw, 40px);
+  letter-spacing: 0.02em;
+  width: 90%;
+  text-align: center;
+  margin: 0;
+  color: #fff;
+}
+
+.empty-state-text span {
+  margin-top: 6px;
+  font-size: 16px;
+  width: 85%;
+  text-align: center;
+  color: #9a9cc4;
+}
+
+.empty-state-button {
+  margin-top: 16px;
+}
+
+.empty-state-btn {
+  width: 100%;
+}

@@ -6,6 +6,8 @@ import SentMessage from "./chatsComponents/Sentmessage";
 import ReceivedMessage from "./chatsComponents/Receivedmessage";
 import MessageInput from "./chatsComponents/Messageinput";
 import MediaPreview from "./chatsComponents/Mediapreview";
+import { MessageSquareText } from "lucide-react";
+import EmptyState from "../emptyState/EmptyState";
 
 const ChatWindow = ({ chatUser, onMessageSent, onBack }) => {
   const {
@@ -43,13 +45,14 @@ const ChatWindow = ({ chatUser, onMessageSent, onBack }) => {
   // drag & drop highlight (must be above the early return - hooks rule)
   const [dragging, setDragging] = useState(false);
 
-  // EMPTY CHAT
+
   if (!chatUser) {
     return (
-      <div className="empty-chat d-flex flex-column justify-content-center">
-        <div className="chat-logo"></div>
-        <h2>Choose a conversation to continue</h2>
-      </div>
+      <EmptyState
+        icon={<MessageSquareText />}
+        title="Choose a conversation"
+        subtitle="Pick a chat from the list or start a new one to begin messaging."
+      />
     );
   }
 

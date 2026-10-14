@@ -4,6 +4,7 @@ import "./Home.css";
 import HomeNot from "../../Components/NotLoggedPages/HomeNotLogged/HomeNot.jsx";
 import { useSelector } from "react-redux";
 import { getConversation } from "../../../Apis/messages.js";
+import NewChat from "../../Components/newChat/NewChat.jsx";
 import Nopfp from "../../Assets/nopfp.jpg";
 import ChatWindow from "../../Components/Chatwindow/Chatwindow.jsx";
 import { Search, SquarePen, MessageSquareText, Image, Video, FileText, Mic } from "lucide-react";
@@ -16,6 +17,7 @@ const Home = () => {
   const [conversations, setConversations] = useState([]);
   const [selectedChat, setSelectedChat] = useState(null);
   const [search, setSearch] = useState("");
+  const [showNewChat, setShowNewChat] = useState(false);
   const [typingUsers, setTypingUsers] = useState({});
   const [unreadMap, setUnreadMap] = useState({}); // { userId: count }
   const location = useLocation();
@@ -247,7 +249,7 @@ const Home = () => {
           <div className="chats-header">
             <div className="chats-title-row">
               <h3 className="chats-title">Chats</h3>
-              <button type="button" className="new-button">
+              <button type="button" className="new-button" onClick={() => setShowNewChat(true)}>
                 <SquarePen size={15} />
                 <span>New</span>
               </button>
@@ -377,6 +379,16 @@ const Home = () => {
           </div>
         )
       }
+      {showNewChat && (
+        <NewChat
+          contacts={conversations.map((c) => c.user)}
+          onClose={() => setShowNewChat(false)}
+          onSelect={(u) => {
+            handleSelectChat(u);
+            setShowNewChat(false);
+          }}
+        />
+      )}
     </div >
   );
 };
