@@ -1,5 +1,6 @@
 const Message = require("../models/Messages");
 const Contact = require("../models/Contact");
+const User = require("../models/User");
 const cloudinary = require("../config/cloudinary");
 const { getReceiverSocketId, getIO } = require("../Socket/socket");
 
@@ -404,4 +405,26 @@ exports.reactToMessage = async (req, res) => {
             message: "server error"
         });
     }
+};
+
+
+exports.searchUserByPhone = async (req, res) => {
+  try {
+    const digits = String(req.params.phone || "").replace(/\D/g, "");
+    if (digits.length < 7) {
+      return res.json({ status: false, message: "Invalid number" });
+    }
+
+    // country code ka farq na pade, is liye last 10 digits match
+    const tail = digits.slice(-10);
+    const user = await User.findOne({
+      phoneNumber: { $regex: `${tail}$` },
+      _id: { $ne: req.user._id },
+    }).select("name profilePic phoneNumber");
+    if (!user) return res.json({ status: false, message: "Not registered" });
+
+    res.json({ status: true, user });
+  } catch (err) {
+    res.status(500).json({ status: false, message: err.message, error: console.error(err) });
+  }
 };

@@ -43,5 +43,29 @@ upload.uploadSingle = (field) => (req, res, next) => {
   });
 };
 
+
+
+// Status uploads: images + videos only
+const statusFilter = (req, file, cb) => {
+  if (!/^(image|video)\//.test(file.mimetype)) {
+    return cb(new Error("Only photos and videos can be posted to status"));
+  }
+  cb(null, true);
+};
+
+const statusUpload = multer({
+  storage,
+  limits: { fileSize: MAX_FILE_SIZE, files: 1 },
+  fileFilter: statusFilter,
+});
+
+upload.statusSingle = (field) => (req, res, next) => {
+  statusUpload.single(field)(req, res, (err) => {
+    if (!err) return next();
+    const message =
+      err.code === "LIMIT_FILE_SIZE" ? "File is too large (max 25 MB)" : err.message || "Upload failed";
+    return res.status(400).json({ status: false, message });
+  });
+};
 // still works as `upload.single(...)` anywhere else you already use it
 module.exports = upload;
