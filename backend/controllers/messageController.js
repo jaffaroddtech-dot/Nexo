@@ -2,14 +2,14 @@ const Message = require("../models/Messages");
 const Contact = require("../models/Contact");
 const User = require("../models/User");
 const cloudinary = require("../config/cloudinary");
-const { getReceiverSocketId, getIO } = require("../Socket/socket");
+const { getReceiverSocketId, getIO, createNotification } = require("../Socket/socket");
 
 
 exports.sendMessage = async (req, res) => {
     try {
         const senderId = req.user._id;
 
-        // With multipart/form-data every field arrives as a string
+
         const { receiverId, text, caption, duration } = req.body;
         const replyTo =
             req.body.replyTo && req.body.replyTo !== "null" && req.body.replyTo !== "undefined"
@@ -73,6 +73,26 @@ exports.sendMessage = async (req, res) => {
             getIO().to(receiverSocketId).emit("newMessage", populatedMessage);
         }
 
+        // 🔔 notification (chat khuli ho to helper khud skip kar deta hai)
+        const notifText =
+            newMessage.text ||
+            newMessage.caption ||
+            (media?.type === "image"
+                ? "📷 Photo"
+                : media?.type === "video"
+                    ? "🎥 Video"
+                    : media?.type === "audio"
+                        ? "🎤 Voice message"
+                        : "📄 Document");
+
+        await createNotification({
+            recipient: receiverId,
+            sender: senderId,
+            type: "message",
+            text: notifText,
+            referenceId: newMessage._id,
+        });
+
         return res.status(201).json({
             status: true,
             message: populatedMessage,
@@ -105,6 +125,10 @@ exports.getMessages = async (req, res) => {
             },
         })
             .populate("replyTo", "text senderId isDeleted")
+            .populate(
+                "statusReply.statusId",
+                "type text mediaUrl"
+            )
             .sort({ createdAt: 1 });
 
         return res.status(200).json({ status: true, messages });
@@ -123,14 +147,15 @@ exports.getConversations = async (req, res) => {
                 { senderId: myId },
                 { receiverId: myId },
             ],
+            chatId: null, // group messages ko 1-1 conversations se bahar rakho
             deletedFor: {
                 $nin: [myId],
             },
         })
             .sort({ createdAt: -1 })
             .populate("senderId", "name profilePic online lastSeen")
-            .populate("receiverId", "name profilePic online lastSeen");
-
+            .populate("receiverId", "name profilePic online lastSeen")
+            .populate("statusReply.statusId", "type text mediaUrl");
         if (!messages.length) {
             return res.status(200).json({
                 status: true,
@@ -195,6 +220,8 @@ exports.getConversations = async (req, res) => {
         };
 
         messages.forEach((msg) => {
+            if (!msg.senderId || !msg.receiverId) return;
+
             const otherUser =
                 String(msg.senderId._id) === String(myId)
                     ? msg.receiverId
@@ -269,7 +296,6 @@ exports.deleteForMe = async (req, res) => {
 
         const userId = req.user._id;
         const { messageId } = req.params;
-        console.log("Delete for me request:", { userId, messageId });
         const message = await Message.findById(messageId);
         if (!message) {
             return res.status(404).json({ status: false, message: "Message not found" });
@@ -409,22 +435,22 @@ exports.reactToMessage = async (req, res) => {
 
 
 exports.searchUserByPhone = async (req, res) => {
-  try {
-    const digits = String(req.params.phone || "").replace(/\D/g, "");
-    if (digits.length < 7) {
-      return res.json({ status: false, message: "Invalid number" });
+    try {
+        const digits = String(req.params.phone || "").replace(/\D/g, "");
+        if (digits.length < 7) {
+            return res.json({ status: false, message: "Invalid number" });
+        }
+
+        // country code ka farq na pade, is liye last 10 digits match
+        const tail = digits.slice(-10);
+        const user = await User.findOne({
+            phoneNumber: { $regex: `${tail}$` },
+            _id: { $ne: req.user._id },
+        }).select("name profilePic phoneNumber");
+        if (!user) return res.json({ status: false, message: "Not registered" });
+
+        res.json({ status: true, user });
+    } catch (err) {
+        res.status(500).json({ status: false, message: err.message, error: console.error(err) });
     }
-
-    // country code ka farq na pade, is liye last 10 digits match
-    const tail = digits.slice(-10);
-    const user = await User.findOne({
-      phoneNumber: { $regex: `${tail}$` },
-      _id: { $ne: req.user._id },
-    }).select("name profilePic phoneNumber");
-    if (!user) return res.json({ status: false, message: "Not registered" });
-
-    res.json({ status: true, user });
-  } catch (err) {
-    res.status(500).json({ status: false, message: err.message, error: console.error(err) });
-  }
 };

@@ -10,8 +10,14 @@ const messageSchema = new mongoose.Schema(
     receiverId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      default: null,
     },
+    readBy: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
     text: {
       type: String,
       trim: true,
@@ -56,6 +62,31 @@ const messageSchema = new mongoose.Schema(
       size: Number,
       mimeType: String,
       duration: Number, // seconds (voice messages)
+    },
+    statusReply: {
+      statusId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Status",
+        default: null,
+      },
+
+      statusType: {
+        type: String,
+        enum: ["text", "image", "video"],
+      },
+
+      previewText: String,
+    },
+    chatId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Chat",
+      default: null,
+    },
+    isSystem: { type: Boolean, default: false },
+    system: {
+      action: { type: String, enum: ["add", "remove", "leave", "avatar"] },
+      actorId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+      targetId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
     },
   },
   { timestamps: true }

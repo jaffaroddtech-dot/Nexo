@@ -3,6 +3,8 @@ const authRoutes = require("./authRoutes");
 const contactRoutes = require("./contactRoutes");
 const messageRoutes = require("./messagesRoutes");
 const statusRoutes = require("./statusRoutes");
+const notificationRoutes = require("./notificationRoutes");
+const groupRoutes = require('./groupRoutes');
 
 module.exports = {
   "/api/users": userRoutes,
@@ -10,4 +12,6 @@ module.exports = {
   "/api/contacts": contactRoutes,
   "/api/messages": messageRoutes,
   "/api/status": statusRoutes,
+  "/api/notification" : notificationRoutes,
+  "/api/chats": groupRoutes,
 };

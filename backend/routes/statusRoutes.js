@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { createStatus, getStatuses, markStatusAsSeen, deleteStatus, likeStatus } = require("../controllers/statusController");
+const { createStatus, getStatuses, markStatusAsSeen, deleteStatus, likeStatus, replyToStatus } = require("../controllers/statusController");
 const { protect } = require("../middleware/authMiddleware");
 const upload = require("../middleware/mediaMiddleware");
 
@@ -9,5 +9,6 @@ router.get("/", protect, getStatuses);
 router.post("/:id/view", protect, markStatusAsSeen);
 router.delete("/:id", protect, deleteStatus);
 router.post("/:id/like", protect, likeStatus);
+router.post("/reply/:statusId", protect, replyToStatus);
 
 module.exports = router;

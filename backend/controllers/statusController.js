@@ -1,7 +1,8 @@
 const Status = require("../models/Status");
 const Contact = require("../models/Contact");
+const Message = require("../models/Messages");
 const cloudinary = require("../config/cloudinary");
-const { getIO } = require("../Socket/socket"); // <- adjust path
+const { getIO, getReceiverSocketId, createNotification } = require("../Socket/socket");
 
 exports.createStatus = async (req, res) => {
     try {
@@ -45,8 +46,7 @@ exports.getStatuses = async (req, res) => {
         const contacts = await Contact.find({
             owner: req.user._id,
         });
-        
-        console.log("Contacts fetched:", contacts);
+
         const contactMap = {};
 
         contacts.forEach((contact) => {
@@ -197,22 +197,24 @@ exports.likeStatus = async (req, res) => {
         }
 
         const alreadyLiked = status.likes.some(
-            (like) =>
-                like.userId.toString() ===
-                req.user._id.toString()
+            (like) => like.userId.toString() === req.user._id.toString()
         );
 
         if (!alreadyLiked) {
-            status.likes.push({
-                userId: req.user._id,
-            });
-
+            status.likes.push({ userId: req.user._id });
             await status.save();
+
+            // 🔔 self-like ka check helper khud kar leta hai
+            await createNotification({
+                recipient: status.userId,
+                sender: req.user._id,
+                type: "status_like",
+                text: "liked your status",
+                referenceId: status._id,
+            });
         }
 
-        const updatedStatus = await Status.findById(
-            status._id
-        )
+        const updatedStatus = await Status.findById(status._id)
             .populate("likes.userId", "fullName profilePic");
 
         res.status(200).json({
@@ -221,6 +223,72 @@ exports.likeStatus = async (req, res) => {
         });
     } catch (error) {
         res.status(500).json({
+            status: false,
+            message: error.message,
+        });
+    }
+};
+
+
+exports.replyToStatus = async (req, res) => {
+    try {
+        const { statusId } = req.params;
+        const { text } = req.body;
+        const status = await Status.findById(statusId);
+
+        if (!status) {
+            return res.status(404).json({
+                status: false,
+                message: "Status not found",
+            });
+        }
+
+        const message = await Message.create({
+            senderId: req.user._id,
+            receiverId: status.userId,
+            text: text.trim(),
+
+            statusReply: {
+                statusId: status._id,
+                type: status.type,
+                previewText:
+                    status.type === "text"
+                        ? status.text
+                        : status.type === "image"
+                            ? "📷 Photo"
+                            : "🎥 Video",
+            },
+        });
+
+        const populatedMessage = await Message.findById(
+            message._id
+        );
+
+        const receiverSocketId = getReceiverSocketId(
+            status.userId.toString()
+        );
+
+        if (receiverSocketId) {
+            getIO()
+                .to(receiverSocketId)
+                .emit("newMessage", populatedMessage);
+        }
+
+        // 🔔 status reply notification
+        await createNotification({
+            recipient: status.userId,
+            sender: req.user._id,
+            type: "status_reply",
+            text: `replied: ${text.trim()}`,
+            referenceId: status._id,
+        });
+
+        return res.status(201).json({
+            status: true,
+            message: populatedMessage,
+        });
+    } catch (error) {
+        return res.status(500).json({
             status: false,
             message: error.message,
         });
