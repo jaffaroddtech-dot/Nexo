@@ -1,25 +1,44 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useLocation } from "react-router-dom";
 import "./Home.css";
+import "../../Components/groups/Group.css";
 import HomeNot from "../../Components/NotLoggedPages/HomeNotLogged/HomeNot.jsx";
 import { useSelector } from "react-redux";
 import { getConversation } from "../../../Apis/messages.js";
+import { getUserChats, normalizeGroup, getMemberName } from "../../../Apis/group.js";
 import NewChat from "../../Components/newChat/NewChat.jsx";
+import NewGroup from "../../Components/groups/NewGroup.jsx";
+import GroupInfo from "../../Components/groups/GroupInfo.jsx";
 import Nopfp from "../../Assets/nopfp.jpg";
 import ChatWindow from "../../Components/Chatwindow/Chatwindow.jsx";
-import { Search, SquarePen, MessageSquareText, Image, Video, FileText, Mic } from "lucide-react";
+import {
+  Search,
+  SquarePen,
+  Users,
+  MessageSquareText,
+  Image,
+  Video,
+  FileText,
+  Mic,
+} from "lucide-react";
 import { useSocket } from "../../../SocketContext/sockectContext.jsx";
 import { formatChatTime, getConversationPreview } from "../../Helpers/Helper.js";
+
 const Home = () => {
   const { user } = useSelector((state) => state.auth);
   const { socket, onlineUsers } = useSocket();
   const [selected, setSelected] = useState("all");
   const [conversations, setConversations] = useState([]);
+  const [groups, setGroups] = useState([]);
   const [selectedChat, setSelectedChat] = useState(null);
   const [search, setSearch] = useState("");
   const [showNewChat, setShowNewChat] = useState(false);
+  const [showNewGroup, setShowNewGroup] = useState(false);
+  const [showGroupInfo, setShowGroupInfo] = useState(false);
   const [typingUsers, setTypingUsers] = useState({});
+  const [groupTyping, setGroupTyping] = useState({}); // { chatId: [senderId] }
   const [unreadMap, setUnreadMap] = useState({}); // { userId: count }
+  const [groupUnreadMap, setGroupUnreadMap] = useState({}); // { chatId: count }
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
@@ -29,7 +48,6 @@ const Home = () => {
     }
   }, [location.state]);
 
-  // mobile pe chat khuli ho to navbar hide karne ke liye body pe class
   useEffect(() => {
     document.body.classList.toggle("chat-open", isMobile && !!selectedChat);
     return () => document.body.classList.remove("chat-open");
@@ -66,13 +84,89 @@ const Home = () => {
     }
   }, []);
 
+  const fetchGroups = useCallback(async (applyUnread = true) => {
+    try {
+      const res = await getUserChats();
+
+      if (res.status) {
+        const list = res.groups.map(normalizeGroup);
+        setGroups(list);
+
+        if (applyUnread) {
+          const counts = {};
+          list.forEach((g) => {
+            if (g.unreadCount > 0) counts[g._id] = g.unreadCount;
+          });
+          setGroupUnreadMap(counts);
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }, []);
+
   useEffect(() => {
     if (!user) return;
     fetchConversations();
-  }, [user, fetchConversations]);
+    fetchGroups();
+  }, [user, fetchConversations, fetchGroups]);
+
+  // group add / update (naya ho to list mein jorr do, warna merge)
+  const applyGroupUpdate = useCallback((raw) => {
+    const g = normalizeGroup(raw);
+    setGroups((prev) =>
+      prev.some((x) => x._id === g._id)
+        ? prev.map((x) => (x._id === g._id ? { ...x, ...g } : x))
+        : [g, ...prev]
+    );
+    setSelectedChat((prev) => (prev?._id === g._id ? { ...prev, ...g } : prev));
+  }, []);
+
+  const removeGroupLocally = useCallback((chatId) => {
+    setGroups((prev) => prev.filter((g) => String(g._id) !== String(chatId)));
+    setGroupUnreadMap((prev) => {
+      const updated = { ...prev };
+      delete updated[chatId];
+      return updated;
+    });
+    setSelectedChat((prev) => (String(prev?._id) === String(chatId) ? null : prev));
+    setShowGroupInfo(false);
+  }, []);
+
+  const updateGroupWithMessage = useCallback(
+    (message) => {
+      setGroups((prev) => {
+        const idx = prev.findIndex((g) => String(g._id) === String(message.chatId));
+        if (idx === -1) {
+          fetchGroups();
+          return prev;
+        }
+        const updated = [...prev];
+        updated[idx] = {
+          ...updated[idx],
+          lastMessage: message,
+          updatedAt: message.createdAt || new Date().toISOString(),
+        };
+        return updated;
+      });
+    },
+    [fetchGroups]
+  );
 
   const updateConversationsWithMessage = useCallback(
     (message) => {
+      // delete jaisi jagah se bina message ke call hota hai -> sab refresh
+      if (!message) {
+        fetchConversations();
+        fetchGroups(false);
+        return;
+      }
+
+      // group message
+      if (message.chatId) {
+        updateGroupWithMessage(message);
+        return;
+      }
 
       const senderId =
         typeof message.senderId === "object"
@@ -114,7 +208,7 @@ const Home = () => {
         return prev;
       });
     },
-    [user, fetchConversations]
+    [user, fetchConversations, fetchGroups, updateGroupWithMessage]
   );
 
   useEffect(() => {
@@ -172,28 +266,51 @@ const Home = () => {
       setConversations((prev) =>
         prev.map((conv) =>
           conv.user._id === userId
-            ? {
-              ...conv,
-              user: {
-                ...conv.user,
-                online: false,
-                lastSeen,
-              },
-            }
+            ? { ...conv, user: { ...conv.user, online: false, lastSeen } }
             : conv
         )
       );
 
       setSelectedChat((prev) =>
-        prev?._id === userId
-          ? {
-            ...prev,
-            online: false,
-            lastSeen,
-          }
-          : prev
+        prev?._id === userId ? { ...prev, online: false, lastSeen } : prev
       );
     };
+
+    /* ---------- GROUP EVENTS ---------- */
+    const handleNewGroupMessage = (message) => {
+      updateGroupWithMessage(message);
+
+      const senderId = String(message.senderId?._id || message.senderId);
+      if (senderId === String(user._id)) return;
+      if (String(selectedChat?._id) === String(message.chatId)) return;
+
+      setGroupUnreadMap((prev) => ({
+        ...prev,
+        [message.chatId]: (prev[message.chatId] || 0) + 1,
+      }));
+    };
+
+    const handleGroupTyping = ({ chatId, senderId }) => {
+      setGroupTyping((prev) => {
+        const cur = prev[chatId] || [];
+        return cur.includes(senderId) ? prev : { ...prev, [chatId]: [...cur, senderId] };
+      });
+    };
+
+    const handleGroupStopTyping = ({ chatId, senderId }) => {
+      setGroupTyping((prev) => {
+        const cur = prev[chatId];
+        if (!cur) return prev;
+        const next = cur.filter((id) => id !== senderId);
+        const copy = { ...prev };
+        if (next.length) copy[chatId] = next;
+        else delete copy[chatId];
+        return copy;
+      });
+    };
+
+    const handleGroupMessageDeleted = () => fetchGroups(false);
+    const handleRemoved = ({ chatId }) => removeGroupLocally(chatId);
 
     socket.on("newMessage", handleNewMessage);
     socket.on("messageDeleted", handleMessageDeleted);
@@ -201,45 +318,115 @@ const Home = () => {
     socket.on("userStopTyping", handleUserStopTyping);
     socket.on("userOffline", handleUserOffline);
 
+    socket.on("newGroupMessage", handleNewGroupMessage);
+    socket.on("groupTyping", handleGroupTyping);
+    socket.on("groupStopTyping", handleGroupStopTyping);
+    socket.on("groupMessageDeleted", handleGroupMessageDeleted);
+    socket.on("addedToGroup", applyGroupUpdate);
+    socket.on("groupUpdated", applyGroupUpdate);
+    socket.on("removedFromGroup", handleRemoved);
+
     return () => {
       socket.off("newMessage", handleNewMessage);
       socket.off("userTyping", handleUserTyping);
       socket.off("userStopTyping", handleUserStopTyping);
       socket.off("messageDeleted", handleMessageDeleted);
       socket.off("userOffline", handleUserOffline);
-    };
-  }, [socket, user, selectedChat, updateConversationsWithMessage]);
 
-  const handleSelectChat = (convUser) => {
-    setSelectedChat(convUser);
+      socket.off("newGroupMessage", handleNewGroupMessage);
+      socket.off("groupTyping", handleGroupTyping);
+      socket.off("groupStopTyping", handleGroupStopTyping);
+      socket.off("groupMessageDeleted", handleGroupMessageDeleted);
+      socket.off("addedToGroup", applyGroupUpdate);
+      socket.off("groupUpdated", applyGroupUpdate);
+      socket.off("removedFromGroup", handleRemoved);
+    };
+  }, [
+    socket,
+    user,
+    selectedChat,
+    updateConversationsWithMessage,
+    updateGroupWithMessage,
+    applyGroupUpdate,
+    removeGroupLocally,
+    fetchConversations,
+    fetchGroups,
+  ]);
+
+  const handleSelectChat = (chat) => {
+    setSelectedChat(chat);
     setUnreadMap((prev) => {
-      if (!prev[convUser._id]) return prev;
+      if (!prev[chat._id]) return prev;
       const updated = { ...prev };
-      delete updated[convUser._id];
+      delete updated[chat._id];
+      return updated;
+    });
+    setGroupUnreadMap((prev) => {
+      if (!prev[chat._id]) return prev;
+      const updated = { ...prev };
+      delete updated[chat._id];
       return updated;
     });
   };
+
+  // 1-1 conversations + groups ek hi list mein, latest upar
+  const items = useMemo(() => {
+    const dm = conversations.map((conv) => ({
+      key: conv.user._id,
+      isGroup: false,
+      chat: conv.user,
+      name: conv.user.name,
+      pic: conv.user.profilePic,
+      lastMessage: conv.lastMessage,
+      lastMessageType: conv.lastMessageType,
+      lastMessageTime: conv.lastMessageTime,
+    }));
+
+    const gr = groups.map((g) => {
+      const lm = g.lastMessage;
+      const preview = lm ? getConversationPreview(lm) : null;
+      let prefix = "";
+      if (lm && !lm.isDeleted) {
+        prefix =
+          String(lm.senderId) === String(user?._id)
+            ? "You: "
+            : `${getMemberName(g, lm.senderId, "Someone").split(" ")[0]}: `;
+      }
+      return {
+        key: g._id,
+        isGroup: true,
+        chat: g,
+        name: g.chatName,
+        pic: g.groupAvatar,
+        lastMessage: preview ? `${prefix}${preview.text}` : "No messages yet",
+        lastMessageType: preview?.type,
+        lastMessageTime: lm?.createdAt || g.updatedAt,
+      };
+    });
+
+    return [...dm, ...gr].sort(
+      (a, b) => new Date(b.lastMessageTime || 0) - new Date(a.lastMessageTime || 0)
+    );
+  }, [conversations, groups, user]);
 
   if (!user) {
     return <HomeNot />;
   }
 
-  // "Unread" tab filter
-  const visibleConversations =
-    selected === "unread"
-      ? conversations.filter((conv) => unreadMap[conv.user._id])
-      : conversations;
+  const unreadOf = (key) => unreadMap[key] || groupUnreadMap[key] || 0;
 
-  const filteredConversations = visibleConversations.filter((conv) => {
-    const name = conv.user.name?.toLowerCase() || "";
-    const message = conv.lastMessage?.toLowerCase() || "";
-    const query = search.toLowerCase();
-
+  const query = search.toLowerCase();
+  const filteredItems = items.filter((item) => {
+    if (selected === "unread" && !unreadOf(item.key)) return false;
+    const name = item.name?.toLowerCase() || "";
+    const message = item.lastMessage?.toLowerCase() || "";
     return name.includes(query) || message.includes(query);
   });
 
-  // kitni chats mein unread messages hain (tab badge ke liye)
-  const unreadTotal = Object.keys(unreadMap).length;
+  const unreadTotal =
+    Object.keys(unreadMap).length + Object.keys(groupUnreadMap).length;
+
+  const contacts = conversations.map((c) => c.user);
 
   return (
     <div className="Main">
@@ -249,10 +436,24 @@ const Home = () => {
           <div className="chats-header">
             <div className="chats-title-row">
               <h3 className="chats-title">Chats</h3>
-              <button type="button" className="new-button" onClick={() => setShowNewChat(true)}>
-                <SquarePen size={15} />
-                <span>New</span>
-              </button>
+              <div className="chats-title-actions">
+                <button
+                  type="button"
+                  className="new-button"
+                  onClick={() => setShowNewGroup(true)}
+                >
+                  <Users size={15} />
+                  <span>Group</span>
+                </button>
+                <button
+                  type="button"
+                  className="new-button"
+                  onClick={() => setShowNewChat(true)}
+                >
+                  <SquarePen size={15} />
+                  <span>New</span>
+                </button>
+              </div>
             </div>
 
             <div className="chat-search">
@@ -285,61 +486,70 @@ const Home = () => {
 
           {/* LIST */}
           <div className="messages-list">
-            {filteredConversations.length > 0 ? (
-              filteredConversations.map((conv) => {
-                const unreadCount = unreadMap[conv.user._id] || 0;
-                const isActive = selectedChat?._id === conv.user._id;
-                const isTyping = !!typingUsers[conv.user._id];
+            {filteredItems.length > 0 ? (
+              filteredItems.map((item) => {
+                const unreadCount = unreadOf(item.key);
+                const isActive = selectedChat?._id === item.key;
+                const typingIds = item.isGroup ? groupTyping[item.key] : null;
+                const isTyping = item.isGroup
+                  ? !!typingIds?.length
+                  : !!typingUsers[item.key];
+                const typingText = item.isGroup
+                  ? `${getMemberName(item.chat, typingIds?.[0], "Someone")} is typing...`
+                  : "typing...";
 
                 return (
                   <div
-                    key={conv.user._id}
+                    key={item.key}
                     role="button"
                     tabIndex={0}
-                    className={`messages ${isActive ? "is-active" : ""} ${unreadCount > 0 ? "is-unread" : ""
-                      }`}
-                    onClick={() => handleSelectChat(conv.user)}
-                    onKeyDown={(e) => e.key === "Enter" && handleSelectChat(conv.user)}
+                    className={`messages ${isActive ? "is-active" : ""} ${
+                      unreadCount > 0 ? "is-unread" : ""
+                    }`}
+                    onClick={() => handleSelectChat(item.chat)}
+                    onKeyDown={(e) => e.key === "Enter" && handleSelectChat(item.chat)}
                   >
                     <div className="profilePictures">
-                      <img
-                        src={conv.user.profilePic || Nopfp}
-                        alt=""
-                        className="profile-image"
-                      />
-                      {onlineUsers.includes(conv.user._id) && (
+                      {item.isGroup && !item.pic ? (
+                        <div className="profile-image group-avatar-fallback">
+                          <Users size={22} />
+                        </div>
+                      ) : (
+                        <img
+                          src={item.pic || Nopfp}
+                          alt=""
+                          className="profile-image"
+                        />
+                      )}
+                      {!item.isGroup && onlineUsers.includes(item.key) && (
                         <span className="online-dot" />
                       )}
                     </div>
 
                     <div className="message-content">
                       <div className="message-header">
-                        <h6 className="message-sender">{conv.user.name}</h6>
+                        <h6 className="message-sender">{item.name}</h6>
                         <span className="message-time">
-                          {formatChatTime(conv.lastMessageTime)}
+                          {formatChatTime(item.lastMessageTime)}
                         </span>
                       </div>
 
                       <div className="message-row">
                         <div className={`message-text ${isTyping ? "is-typing" : ""}`}>
-                          {!isTyping && conv.lastMessageType === "image" && (
+                          {!isTyping && item.lastMessageType === "image" && (
                             <Image size={14} />
                           )}
-
-                          {!isTyping && conv.lastMessageType === "video" && (
+                          {!isTyping && item.lastMessageType === "video" && (
                             <Video size={14} />
                           )}
-
-                          {!isTyping && conv.lastMessageType === "file" && (
+                          {!isTyping && item.lastMessageType === "file" && (
                             <FileText size={14} />
                           )}
-                          {!isTyping && conv.lastMessageType === "audio" && (
+                          {!isTyping && item.lastMessageType === "audio" && (
                             <Mic size={14} />
                           )}
 
-                          <span>
-                            {isTyping ? "typing..." : conv.lastMessage}
-                          </span>
+                          <span>{isTyping ? typingText : item.lastMessage}</span>
                         </div>
                         {unreadCount > 0 && (
                           <span className="unread-dot">
@@ -365,23 +575,24 @@ const Home = () => {
             )}
           </div>
         </div>
-      )
-      }
+      )}
 
-      {
-        (!isMobile || selectedChat) && (
-          <div className="User-messages">
-            <ChatWindow
-              chatUser={selectedChat}
-              onMessageSent={updateConversationsWithMessage}
-              onBack={isMobile ? () => setSelectedChat(null) : undefined}
-            />
-          </div>
-        )
-      }
+      {(!isMobile || selectedChat) && (
+        <div className="User-messages">
+          <ChatWindow
+            chatUser={selectedChat}
+            onMessageSent={updateConversationsWithMessage}
+            onBack={isMobile ? () => setSelectedChat(null) : undefined}
+            onOpenInfo={
+              selectedChat?.isGroup ? () => setShowGroupInfo(true) : undefined
+            }
+          />
+        </div>
+      )}
+
       {showNewChat && (
         <NewChat
-          contacts={conversations.map((c) => c.user)}
+          contacts={contacts}
           onClose={() => setShowNewChat(false)}
           onSelect={(u) => {
             handleSelectChat(u);
@@ -389,7 +600,31 @@ const Home = () => {
           }}
         />
       )}
-    </div >
+
+      {showNewGroup && (
+        <NewGroup
+          contacts={contacts}
+          onClose={() => setShowNewGroup(false)}
+          onCreated={(group) => {
+            const g = normalizeGroup(group);
+            setGroups((prev) => (prev.some((x) => x._id === g._id) ? prev : [g, ...prev]));
+            handleSelectChat(g);
+            setShowNewGroup(false);
+          }}
+        />
+      )}
+
+      {showGroupInfo && selectedChat?.isGroup && (
+        <GroupInfo
+          group={selectedChat}
+          me={user}
+          contacts={contacts}
+          onClose={() => setShowGroupInfo(false)}
+          onGroupChange={applyGroupUpdate}
+          onLeft={removeGroupLocally}
+        />
+      )}
+    </div>
   );
 };
 

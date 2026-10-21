@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useSelector } from "react-redux";
 import { useSocket } from "../../../../SocketContext/sockectContext";
 
@@ -10,8 +10,19 @@ import {
   deleteMessageForEveryone,
   reactToMessage,
 } from "../../../../Apis/messages";
+import {
+  getGroupMessages,
+  sendGroupMessage,
+  getMemberName,
+} from "../../../../Apis/group.js";
 
 import { MAX_FILE_SIZE, formatFileSize, getFileKind } from "./mediaUtils.js";
+
+// 1-1 ya group, sahi API par bhej do
+const sendTo = (target, payload, onProgress) =>
+  target.isGroup
+    ? sendGroupMessage(target._id, payload, onProgress)
+    : sendMessage(payload, onProgress);
 
 const useChatWindow = (chatUser, onMessageSent) => {
   const { user } = useSelector((state) => state.auth);
@@ -20,12 +31,13 @@ const useChatWindow = (chatUser, onMessageSent) => {
   const [messages, setMessages] = useState([]);
   const [replyMessage, setReplyMessage] = useState(null);
   const [text, setText] = useState("");
-  const [isTyping, setIsTyping] = useState(false);
+  const [isTyping, setIsTyping] = useState(false); // 1-1
+  const [typingIds, setTypingIds] = useState([]); // group
   const [openReactionId, setOpenReactionId] = useState(null);
   const [openMenuId, setOpenMenuId] = useState(null);
 
   // MEDIA UPLOAD STATE
-  const [attachment, setAttachment] = useState(null); // { file, kind, previewUrl, error }
+  const [attachment, setAttachment] = useState(null);
   const [caption, setCaption] = useState("");
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -36,18 +48,21 @@ const useChatWindow = (chatUser, onMessageSent) => {
 
   const bottomRef = useRef(null);
   const typingTimeoutRef = useRef(null);
-  const sendingRef = useRef(false); // blocks double send
+  const sendingRef = useRef(false);
   const previewUrlRef = useRef(null);
 
-  // keep latest callback in a ref so handlers below stay stable (needed for React.memo)
   const onMessageSentRef = useRef(onMessageSent);
   onMessageSentRef.current = onMessageSent;
+
+  const chatUserRef = useRef(chatUser);
+  chatUserRef.current = chatUser;
 
   const chatUserId = chatUser?._id;
   const chatUserIdRef = useRef(chatUserId);
   chatUserIdRef.current = chatUserId;
 
-  // keep latest reply target for the voice handler
+  const isGroup = Boolean(chatUser?.isGroup);
+
   const replyMessageRef = useRef(replyMessage);
   replyMessageRef.current = replyMessage;
 
@@ -92,7 +107,6 @@ const useChatWindow = (chatUser, onMessageSent) => {
     setUploadError("");
   }, []);
 
-  // free the blob URL on unmount
   useEffect(
     () => () => {
       if (previewUrlRef.current) URL.revokeObjectURL(previewUrlRef.current);
@@ -100,19 +114,27 @@ const useChatWindow = (chatUser, onMessageSent) => {
     []
   );
 
-  // FETCH MESSAGES WHEN CHAT USER CHANGES
+  // FETCH MESSAGES WHEN CHAT CHANGES
   useEffect(() => {
     if (!chatUser) {
       setMessages([]);
       return;
     }
 
-    let cancelled = false; // ignore responses of a previous chat
+    let cancelled = false;
 
     const fetchMessages = async () => {
       try {
         setMessages([]);
         setOpenMenuId(null);
+
+        if (chatUser.isGroup) {
+          const res = await getGroupMessages(chatUser._id);
+          if (cancelled) return;
+          if (res.status) setMessages(res.messages);
+          socket?.emit("groupMessagesSeen", { chatId: chatUser._id });
+          return;
+        }
 
         const res = await getMessages(chatUser._id);
         if (cancelled) return;
@@ -137,6 +159,86 @@ const useChatWindow = (chatUser, onMessageSent) => {
   useEffect(() => {
     if (!socket || !chatUser || !user) return;
 
+    /* ---------------- GROUP ---------------- */
+    if (chatUser.isGroup) {
+      const chatId = String(chatUser._id);
+      const me = String(user._id);
+
+      const onNew = (message) => {
+        if (String(message.chatId) !== chatId) return;
+        setMessages((prev) =>
+          prev.some((m) => m._id === message._id) ? prev : [...prev, message]
+        );
+        setTypingIds((prev) => prev.filter((id) => String(id) !== String(message.senderId)));
+        if (String(message.senderId) !== me) {
+          socket.emit("groupMessagesSeen", { chatId });
+        }
+      };
+
+      const onTyping = ({ chatId: id, senderId }) => {
+        if (String(id) !== chatId) return;
+        setTypingIds((prev) => (prev.includes(senderId) ? prev : [...prev, senderId]));
+      };
+
+      const onStopTyping = ({ chatId: id, senderId }) => {
+        if (String(id) !== chatId) return;
+        setTypingIds((prev) => prev.filter((x) => x !== senderId));
+      };
+
+      const onSeen = ({ chatId: id, seenBy }) => {
+        if (String(id) !== chatId) return;
+        setMessages((prev) =>
+          prev.map((m) =>
+            String(m.senderId) === me &&
+              !(m.readBy || []).some((r) => String(r) === String(seenBy))
+              ? { ...m, readBy: [...(m.readBy || []), seenBy] }
+              : m
+          )
+        );
+      };
+
+      const onDeleted = ({ chatId: id, messageId }) => {
+        if (String(id) !== chatId) return;
+        setMessages((prev) =>
+          prev.map((m) =>
+            String(m._id) === String(messageId)
+              ? { ...m, isDeleted: true, text: "", caption: "", media: null }
+              : m
+          )
+        );
+      };
+
+      const onReaction = ({ chatId: id, messageId, reactions }) => {
+        if (String(id) !== chatId) return;
+        setMessages((prev) =>
+          prev.map((m) => (String(m._id) === String(messageId) ? { ...m, reactions } : m))
+        );
+      };
+      const onSystem = (msg) => {
+        if (String(msg.chatId) !== String(chatUser?._id)) return;
+        setMessages((prev) => (prev.some((m) => m._id === msg._id) ? prev : [...prev, msg]));
+      };
+
+      socket.on("groupSystemMessage", onSystem);
+      socket.on("newGroupMessage", onNew);
+      socket.on("groupTyping", onTyping);
+      socket.on("groupStopTyping", onStopTyping);
+      socket.on("groupSeenUpdate", onSeen);
+      socket.on("groupMessageDeleted", onDeleted);
+      socket.on("groupMessageReactionUpdate", onReaction);
+
+      return () => {
+        socket.off("newGroupMessage", onNew);
+        socket.off("groupTyping", onTyping);
+        socket.off("groupStopTyping", onStopTyping);
+        socket.off("groupSeenUpdate", onSeen);
+        socket.off("groupMessageDeleted", onDeleted);
+        socket.off("groupMessageReactionUpdate", onReaction);
+        socket.off("groupSystemMessage", onSystem);
+      };
+    }
+
+    /* ---------------- 1-1 ---------------- */
     const handleNewMessage = (message) => {
       const isRelevant =
         (message.senderId === chatUser._id && message.receiverId === user._id) ||
@@ -204,32 +306,52 @@ const useChatWindow = (chatUser, onMessageSent) => {
       socket.off("messageDeleted", handleMessageDeleted);
       socket.off("messageReactionUpdate", handleReactionUpdate);
     };
-  }, [socket, chatUser?._id, user?._id]);
+  }, [socket, chatUser?._id, chatUser?.isGroup, user?._id]);
+
+  // typing: dm ya group
+  const typing = isGroup ? typingIds.length > 0 : isTyping;
+
+  const typingLabel = useMemo(() => {
+    if (!isGroup || !typingIds.length) return "";
+    const names = typingIds.map((id) => getMemberName(chatUser, id, "Someone"));
+    if (names.length === 1) return `${names[0]} is typing...`;
+    if (names.length === 2) return `${names[0]} and ${names[1]} are typing...`;
+    return "Several people are typing...";
+  }, [isGroup, typingIds, chatUser]);
+
+  // group mein "seen" = baaki sab members ne padh liya
+  const meId = user?._id;
+  const memberCount = chatUser?.participants?.length || 0;
+  const displayMessages = useMemo(() => {
+    if (!isGroup) return messages;
+    const others = Math.max(1, memberCount - 1);
+    return messages.map((m) => {
+      if (String(m.senderId) !== String(meId)) return m;
+      const readers = (m.readBy || []).filter((id) => String(id) !== String(meId)).length;
+      const seen = readers >= others;
+      return m.seen === seen ? m : { ...m, seen };
+    });
+  }, [messages, isGroup, memberCount, meId]);
 
   // AUTO SCROLL
-  // only when the LAST message changes (new message) or typing toggles,
-  // not on reactions / deletes of older messages
   const lastMessageId = messages[messages.length - 1]?._id;
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [lastMessageId, isTyping]);
+  }, [lastMessageId, typing]);
 
-  // Images / videos finish loading AFTER the scroll above and push the list down.
-  // Wired to the chat body's onLoadCapture / onLoadedMetadataCapture.
   const handleMediaLoad = useCallback(() => {
     const body = bottomRef.current?.parentElement;
     if (!body) return;
     const distanceFromBottom = body.scrollHeight - body.scrollTop - body.clientHeight;
-    // only follow if the user is already near the bottom (don't yank them while reading history)
     if (distanceFromBottom < 500) {
       bottomRef.current.scrollIntoView({ behavior: "auto" });
     }
   }, []);
 
   // RESET WHEN CHAT CHANGES
-  // reply / draft / popups / pending attachment must not leak into the next chat
   useEffect(() => {
     setIsTyping(false);
+    setTypingIds([]);
     clearTimeout(typingTimeoutRef.current);
     setReplyMessage(null);
     setText("");
@@ -238,17 +360,29 @@ const useChatWindow = (chatUser, onMessageSent) => {
     clearAttachment();
   }, [chatUser?._id, clearAttachment]);
 
+  // typing event (dm / group)
+  const emitTyping = (kind) => {
+    if (!socket || !chatUser) return;
+    if (chatUser.isGroup) {
+      socket.emit(kind === "typing" ? "groupTyping" : "groupStopTyping", {
+        chatId: chatUser._id,
+      });
+    } else {
+      socket.emit(kind, { receiverId: chatUser._id });
+    }
+  };
+
   // SEND TEXT MESSAGE
   const handleSend = async () => {
     if (!text.trim() || !chatUser || sendingRef.current) return;
 
     sendingRef.current = true;
     try {
-      const res = await sendMessage({
-        receiverId: chatUser._id,
-        text: text.trim(),
-        replyTo: replyMessage?._id || null,
-      });
+      const payload = chatUser.isGroup
+        ? { text: text.trim(), replyTo: replyMessage?._id || null }
+        : { receiverId: chatUser._id, text: text.trim(), replyTo: replyMessage?._id || null };
+
+      const res = await sendTo(chatUser, payload);
 
       if (res.status) {
         setMessages((prev) =>
@@ -260,7 +394,7 @@ const useChatWindow = (chatUser, onMessageSent) => {
         setText("");
         setReplyMessage(null);
 
-        socket?.emit("stopTyping", { receiverId: chatUser._id });
+        emitTyping("stopTyping");
         clearTimeout(typingTimeoutRef.current);
 
         onMessageSent?.(res.message);
@@ -272,11 +406,12 @@ const useChatWindow = (chatUser, onMessageSent) => {
     }
   };
 
-  // SEND MEDIA MESSAGE (image / video / document + optional caption)
+  // SEND MEDIA MESSAGE
   const handleSendMedia = async () => {
     if (!attachment || attachment.error || !chatUser || sendingRef.current) return;
 
-    const targetId = chatUser._id;
+    const target = chatUser;
+    const targetId = target._id;
 
     sendingRef.current = true;
     setUploading(true);
@@ -285,17 +420,16 @@ const useChatWindow = (chatUser, onMessageSent) => {
 
     try {
       const formData = new FormData();
-      formData.append("receiverId", targetId);
-      formData.append("media", attachment.file); // field name must match upload.single("media")
+      if (!target.isGroup) formData.append("receiverId", targetId);
+      formData.append("media", attachment.file);
       if (caption.trim()) formData.append("caption", caption.trim());
       if (replyMessage?._id) formData.append("replyTo", replyMessage._id);
 
-      const res = await sendMessage(formData, (e) => {
+      const res = await sendTo(target, formData, (e) => {
         if (e.total) setUploadProgress(Math.round((e.loaded * 100) / e.total));
       });
 
       if (res.status) {
-        // user may have switched chats while uploading
         if (chatUserIdRef.current === targetId) {
           setMessages((prev) =>
             prev.some((msg) => msg._id === res.message._id)
@@ -320,25 +454,25 @@ const useChatWindow = (chatUser, onMessageSent) => {
     }
   };
 
-  // SEND VOICE MESSAGE (called automatically when recording stops)
+  // SEND VOICE MESSAGE
   const handleSendVoice = useCallback(async (file, duration) => {
-    const targetId = chatUserIdRef.current;
-    if (!targetId || !file) return;
+    const target = chatUserRef.current;
+    if (!target?._id || !file) return;
+    const targetId = target._id;
 
     setVoiceSending(true);
     try {
       const formData = new FormData();
-      formData.append("receiverId", targetId);
-      formData.append("media", file); // same field name as upload.single("media")
+      if (!target.isGroup) formData.append("receiverId", targetId);
+      formData.append("media", file);
       formData.append("duration", String(duration));
       if (replyMessageRef.current?._id) {
         formData.append("replyTo", replyMessageRef.current._id);
       }
 
-      const res = await sendMessage(formData);
+      const res = await sendTo(target, formData);
 
       if (res.status) {
-        // user may have switched chats while uploading
         if (chatUserIdRef.current === targetId) {
           setMessages((prev) =>
             prev.some((m) => m._id === res.message._id)
@@ -364,16 +498,16 @@ const useChatWindow = (chatUser, onMessageSent) => {
     if (!socket || !chatUser) return;
 
     if (!value.trim()) {
-      socket.emit("stopTyping", { receiverId: chatUser._id });
+      emitTyping("stopTyping");
       clearTimeout(typingTimeoutRef.current);
       return;
     }
 
-    socket.emit("typing", { receiverId: chatUser._id });
+    emitTyping("typing");
 
     clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => {
-      socket.emit("stopTyping", { receiverId: chatUser._id });
+      emitTyping("stopTyping");
     }, 1500);
   };
 
@@ -405,10 +539,11 @@ const useChatWindow = (chatUser, onMessageSent) => {
             )
           );
 
-          socket?.emit("messageDeleted", {
-            messageId,
-            receiverId: chatUserId,
-          });
+          if (chatUserRef.current?.isGroup) {
+            socket?.emit("groupMessageDeleted", { chatId: chatUserId, messageId });
+          } else {
+            socket?.emit("messageDeleted", { messageId, receiverId: chatUserId });
+          }
 
           onMessageSentRef.current?.();
         }
@@ -431,11 +566,19 @@ const useChatWindow = (chatUser, onMessageSent) => {
             prev.map((m) => (m._id === msg._id ? res.message : m))
           );
 
-          socket?.emit("messageReaction", {
-            receiverId: chatUserId,
-            messageId: msg._id,
-            reactions: res.message.reactions,
-          });
+          if (chatUserRef.current?.isGroup) {
+            socket?.emit("groupMessageReaction", {
+              chatId: chatUserId,
+              messageId: msg._id,
+              reactions: res.message.reactions,
+            });
+          } else {
+            socket?.emit("messageReaction", {
+              receiverId: chatUserId,
+              messageId: msg._id,
+              reactions: res.message.reactions,
+            });
+          }
         }
 
         setOpenReactionId(null);
@@ -445,6 +588,25 @@ const useChatWindow = (chatUser, onMessageSent) => {
     },
     [socket, chatUserId]
   );
+
+  useEffect(() => {
+    if (!chatUser?.isGroup) return;
+
+    const onLocal = (e) => {
+      const list = (e.detail || []).filter(
+        (m) => String(m.chatId) === String(chatUser._id)
+      );
+      if (!list.length) return;
+      setMessages((prev) => {
+        const have = new Set(prev.map((m) => String(m._id)));
+        const fresh = list.filter((m) => !have.has(String(m._id)));
+        return fresh.length ? [...prev, ...fresh] : prev;
+      });
+    };
+
+    window.addEventListener("group-system-messages", onLocal);
+    return () => window.removeEventListener("group-system-messages", onLocal);
+  }, [chatUser?._id, chatUser?.isGroup]);
 
   // ONE POPUP AT A TIME
   useEffect(() => {
@@ -479,9 +641,11 @@ const useChatWindow = (chatUser, onMessageSent) => {
   return {
     user,
     onlineUsers,
-    messages,
+    messages: displayMessages,
     text,
-    isTyping,
+    isTyping: typing,
+    typingLabel,
+    isGroup,
     replyMessage,
     setReplyMessage,
     openReactionId,

@@ -7,6 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Heart,
+  Send,
   Type,
   Check,
   CircleDashed,
@@ -25,6 +26,7 @@ import {
   markStatusAsSeen,
   deleteStatus,
   likeStatus,
+  replyStatus
 } from "../../../Apis/status.js";
 
 /* =========================
@@ -115,6 +117,8 @@ const Status = ({ socket, onReply }) => {
   const [viewersOpen, setViewersOpen] = useState(false);
   const [ready, setReady] = useState({ id: null, ms: 0 });
   const [replyText, setReplyText] = useState("");
+  const [replyFocused, setReplyFocused] = useState(false);
+  const replyInputRef = useRef(null);
   const [liked, setLiked] = useState({});
   const videoRef = useRef(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -185,6 +189,24 @@ const Status = ({ socket, onReply }) => {
       console.log(error);
     }
   };
+
+
+  // Reply to status
+  const sendReply = async (text) => {
+    const t = text.trim();
+
+    if (!t || !activeStatus || !activeGroup) return;
+
+    try {
+      await replyStatus(activeStatus._id, { text: t });
+      setReplyText("");
+      replyInputRef.current?.blur();
+      setReplyFocused(false);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
 
   // initial load + fallback refresh (every 30s and when the tab becomes visible again)
   useEffect(() => {
@@ -290,7 +312,9 @@ const Status = ({ socket, onReply }) => {
       : ready.id === activeStatus._id
         ? ready.ms
         : null;
-  const paused = isPaused || viewersOpen;
+
+  // reply focus aur delete modal khule hon to status ruka rahe
+  const paused = isPaused || viewersOpen || replyFocused || showDeleteModal;
   const stageOpen = !!viewer || composerOpen;
 
   /* ---------- viewer navigation ---------- */
@@ -298,6 +322,7 @@ const Status = ({ socket, onReply }) => {
     setViewer(null);
     setViewersOpen(false);
     setIsPaused(false);
+    setReplyFocused(false);
     setReplyText("");
   };
 
@@ -317,6 +342,7 @@ const Status = ({ socket, onReply }) => {
     setComposerOpen(false);
     setIsPaused(false);
     setViewersOpen(false);
+    setReplyFocused(false);
     setViewer({ queue, userIdx, segIdx: startIndex(uid) });
   };
 
@@ -414,14 +440,6 @@ const Status = ({ socket, onReply }) => {
       console.log(err);
     }
   };
-
-  const sendReply = (text) => {
-    const t = text.trim();
-    if (!t || !onReply || !activeGroup) return;
-    onReply(activeGroup.user, activeStatus, t);
-    setReplyText("");
-  };
-
 
   /* ---------- composer ---------- */
   useEffect(() => {
@@ -808,23 +826,38 @@ const Status = ({ socket, onReply }) => {
 
                 {/* footer */}
                 {!isMine && (
-                  <div className="st-reply">
+                  <div
+                    className="st-reply"
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onMouseUp={(e) => e.stopPropagation()}
+                    onTouchStart={(e) => e.stopPropagation()}
+                    onTouchEnd={(e) => e.stopPropagation()}
+                  >
                     <input
+                      ref={replyInputRef}
                       type="text"
                       placeholder="Reply..."
                       value={replyText}
                       onChange={(e) => setReplyText(e.target.value)}
-                      onFocus={() => setIsPaused(true)}
-                      onBlur={() => setIsPaused(false)}
+                      onFocus={() => setReplyFocused(true)}
+                      onBlur={() => setReplyFocused(false)}
                       onKeyDown={(e) => e.key === "Enter" && sendReply(replyText)}
                     />
+                    <button
+                      type="button"
+                      aria-label="Send reply"
+                      className={`st-send ${replyText.trim() ? "active" : ""}`}
+                      disabled={!replyText.trim()}
+                      onClick={() => sendReply(replyText)}
+                    >
+                      <Send size={18} />
+                    </button>
                     <button
                       type="button"
                       aria-label="Like"
                       className={liked[activeStatus._id] ? "st-liked" : ""}
                       onClick={handleLikeStatus}
                     >
-
                       <Heart size={18} fill={liked[activeStatus._id] ? "currentColor" : "none"} />
                     </button>
                   </div>
@@ -954,10 +987,6 @@ const Status = ({ socket, onReply }) => {
                 <ChevronRight size={20} />
               </button>
             </div>
-
-
-
-
           )}
 
           {/* ---------- Composer ---------- */}

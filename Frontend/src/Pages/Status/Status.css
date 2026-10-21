@@ -511,6 +511,7 @@
 .st-reply button {
   width: 40px;
   height: 40px;
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -519,6 +520,24 @@
   color: #fff;
   background: rgba(11, 12, 30, 0.4);
   cursor: pointer;
+}
+
+/* send button */
+.st-reply .st-send {
+  transition: background 0.2s, opacity 0.2s;
+}
+
+.st-reply .st-send:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.st-reply .st-send.active {
+  background: #7758f9;
+}
+
+.st-reply .st-send.active:hover {
+  background: #6747d8;
 }
 
 /* composer */
@@ -625,99 +644,8 @@
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* =========================
-   RESPONSIVE (hamesha END mein)
-========================= */
-@media (max-width: 992px) {
-  .st-left {
-    flex-basis: 320px;
-    width: 320px;
-    min-width: 320px;
-  }
-}
-
-@media (max-width: 768px) {
-  .st-left {
-    flex: 1 1 0;
-    width: auto;
-    min-width: 0;
-    border-right: none;
-  }
-
-  .st-header {
-    padding: 16px 14px 10px;
-  }
-
-  .st-title {
-    font-size: 20px;
-  }
-
-  .st-search input {
-    font-size: 16px; /* iOS zoom na kare */
-  }
-
-  /* viewer + composer fullscreen, bottom navbar ke upar */
-  .st-stage {
-    position: fixed;
-    z-index: 2000;
-    background: #0b0c1e;
-  }
-
-  .st-slide,
-  .st-composer {
-    width: 100%;
-    height: 100%;
-    border: none;
-    border-radius: 0;
-  }
-
-  .st-nav {
-    display: none;
-  }
-
-  .st-reply {
-    bottom: calc(22px + env(safe-area-inset-bottom, 0px));
-  }
-
-  .st-composer-bottom {
-    bottom: calc(22px + env(safe-area-inset-bottom, 0px));
-  }
-
-  .st-swatches {
-    bottom: calc(84px + env(safe-area-inset-bottom, 0px));
-  }
-
-  .st-reply input,
-  .st-textarea {
-    font-size: 16px;
-  }
-
-  .st-textarea {
-    font-size: 24px;
-  }
-}
-
-@media (max-width: 480px) {
-  .st-name {
-    font-size: 14px;
-  }
-
-  .st-sub {
-    font-size: 12px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .st-slide,
-  .st-composer {
-    animation: none;
-  }
-}
-
-
 /* =====================================================
-   APPEND THIS TO Status.css
-   Put it ABOVE your "RESPONSIVE" block so media queries still win.
+   EXTRAS (avatars, media, sheet, composer, modal)
 ===================================================== */
 
 /* avatars that use a profile picture */
@@ -808,7 +736,7 @@ img.st-av {
   background: linear-gradient(to top, rgba(0, 0, 0, 0.65), transparent);
 }
 
-/* top + bottom scrims so white controls stay readable on bright media */
+/* top scrim so white controls stay readable on bright media */
 .st-slide::before {
   content: "";
   position: absolute;
@@ -999,29 +927,12 @@ img.st-av {
   background: rgba(220, 38, 38, 0.85);
 }
 
-/* mobile tweaks (put inside your existing @media (max-width: 768px) block) */
-@media (max-width: 768px) {
-  .st-caption-input {
-    font-size: 16px;
-    bottom: calc(84px + env(safe-area-inset-bottom, 0px));
-  }
-
-  .st-views {
-    bottom: calc(22px + env(safe-area-inset-bottom, 0px));
-  }
-
-  .st-error {
-    bottom: calc(132px + env(safe-area-inset-bottom, 0px));
-  }
-}
-
-
+/* delete modal */
 .st-modal-backdrop {
   position: fixed;
   inset: 0;
   z-index: 5000;
   background: rgba(0, 0, 0, 0.65);
-
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1047,7 +958,6 @@ img.st-av {
 
 .st-modal-actions {
   margin-top: 20px;
-
   display: flex;
   justify-content: flex-end;
   gap: 10px;
@@ -1058,7 +968,6 @@ img.st-av {
   padding: 10px 16px;
   border-radius: 10px;
   cursor: pointer;
-
   background: #232549;
   color: white;
 }
@@ -1068,7 +977,108 @@ img.st-av {
   padding: 10px 16px;
   border-radius: 10px;
   cursor: pointer;
-
   background: #e63946;
   color: white;
+}
+
+/* =========================
+   RESPONSIVE (hamesha END mein)
+========================= */
+@media (max-width: 992px) {
+  .st-left {
+    flex-basis: 320px;
+    width: 320px;
+    min-width: 320px;
+  }
+}
+
+@media (max-width: 768px) {
+  .st-left {
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+    border-right: none;
+  }
+
+  .st-header {
+    padding: 16px 14px 10px;
+  }
+
+  .st-title {
+    font-size: 20px;
+  }
+
+  .st-search input {
+    font-size: 16px; /* iOS zoom na kare */
+  }
+
+  /* viewer + composer fullscreen, bottom navbar ke upar */
+  .st-stage {
+    position: fixed;
+    z-index: 2000;
+    background: #0b0c1e;
+  }
+
+  .st-slide,
+  .st-composer {
+    width: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 0;
+  }
+
+  .st-nav {
+    display: none;
+  }
+
+  .st-reply {
+    bottom: calc(22px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .st-composer-bottom {
+    bottom: calc(22px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .st-swatches {
+    bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .st-caption-input {
+    font-size: 16px;
+    bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .st-views {
+    bottom: calc(22px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .st-error {
+    bottom: calc(132px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .st-reply input,
+  .st-textarea {
+    font-size: 16px;
+  }
+
+  .st-textarea {
+    font-size: 24px;
+  }
+}
+
+@media (max-width: 480px) {
+  .st-name {
+    font-size: 14px;
+  }
+
+  .st-sub {
+    font-size: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .st-slide,
+  .st-composer {
+    animation: none;
+  }
 }

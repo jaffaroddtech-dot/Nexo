@@ -12,3 +12,5 @@ export const markStatusAsSeen = async (statusId) => requests.post(`/status/${sta
 export const deleteStatus = async (statusId) => requests.delete(`/status/${statusId}`);
 
 export const likeStatus = async (statusId) => requests.post(`/status/${statusId}/like`);
+
+export const replyStatus = async (statusId, text) => requests.post(`/status/reply/${statusId}`,text);

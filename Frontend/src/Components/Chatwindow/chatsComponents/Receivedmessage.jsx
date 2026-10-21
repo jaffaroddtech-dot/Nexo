@@ -4,6 +4,7 @@ import MessageContent from "./Messagecontent";
 import ReactionPicker from "./Reactionpicker";
 import ReactionDisplay from "./Reactiondisplay";
 import { formatTime } from "../../../Helpers/Helper";
+import { getMemberName, getSenderColor } from "../../../../Apis/group";
 
 const ReceivedMessage = ({
   msg,
@@ -20,6 +21,15 @@ const ReceivedMessage = ({
   <div className="received-message-wrapper">
     <div className="received-row">
       <div className="received" onDoubleClick={() => onReply(msg)}>
+        {chatUser?.isGroup && (
+          <div
+            className="group-sender-name"
+            style={{ color: getSenderColor(msg.senderId) }}
+          >
+            {getMemberName(chatUser, msg.senderId)}
+          </div>
+        )}
+
         <MessageContent msg={msg} user={user} chatUser={chatUser} />
         <div className="message-meta">
           <span className="message-time-chat">{formatTime(msg.createdAt)}</span>

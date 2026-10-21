@@ -6,11 +6,13 @@ import {
   getDownloadUrl,
   formatDuration,
 } from "./mediaUtils.js";
+import { getMemberName } from "../../../../Apis/group.js";
 import EmojiText from "./EmojiText.jsx";
 
 const DeletedText = () => (
   <span className="deleted-msg">🚫 This message was deleted</span>
 );
+
 
 // Full-screen image viewer
 const ImageViewer = ({ media, onClose }) => {
@@ -150,15 +152,34 @@ const MediaBlock = ({ media }) => {
 
 // Reply quote (if any) + media + caption / text / deleted placeholder
 const MessageContent = ({ msg, user, chatUser }) => {
-  const replyName =
+    const replyName =
     String(msg?.replyTo?.senderId) === String(user?._id)
       ? "You"
-      : chatUser?.name;
+      : chatUser?.isGroup
+        ? getMemberName(chatUser, msg?.replyTo?.senderId)
+        : chatUser?.name;
 
   const hasMedia = Boolean(msg.media?.url);
-
+  const isMine =
+    String(msg.senderId) === String(user?._id);
   return (
+
     <>
+      {msg.statusReply?.statusId && (
+        <div className="reply-inside-message status-reply-preview">
+
+          <div className="reply-name">
+            {isMine
+              ? "Replied to their status"
+              : "Replied to your status"}
+          </div>
+
+          <div className="reply-text">
+            {msg.statusReply.previewText}
+          </div>
+
+        </div>
+      )}
       {msg.replyTo && (
         <div className="reply-inside-message">
           <div className="reply-name">{replyName}</div>

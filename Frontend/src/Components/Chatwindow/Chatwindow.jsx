@@ -1,21 +1,23 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import "./Chatwindow.css";
 import useChatWindow from "./chatsComponents/Usechatwindow";
 import ChatHeader from "./chatsComponents/Chatheader";
 import SentMessage from "./chatsComponents/Sentmessage";
+import UserInfo from "./chatsComponents/userInfo";
 import ReceivedMessage from "./chatsComponents/Receivedmessage";
 import MessageInput from "./chatsComponents/Messageinput";
 import MediaPreview from "./chatsComponents/Mediapreview";
 import { MessageSquareText } from "lucide-react";
 import EmptyState from "../emptyState/EmptyState";
 
-const ChatWindow = ({ chatUser, onMessageSent, onBack }) => {
+const ChatWindow = ({ chatUser, onMessageSent, onBack, onOpenInfo }) => {
   const {
     user,
     onlineUsers,
     messages,
     text,
     isTyping,
+    typingLabel,
     replyMessage,
     setReplyMessage,
     openReactionId,
@@ -42,8 +44,14 @@ const ChatWindow = ({ chatUser, onMessageSent, onBack }) => {
     voiceSending,
   } = useChatWindow(chatUser, onMessageSent);
 
-  // drag & drop highlight (must be above the early return - hooks rule)
   const [dragging, setDragging] = useState(false);
+
+  const [showInfo, setShowInfo] = useState(false);
+
+  // chat badle to info band
+  useEffect(() => {
+    setShowInfo(false);
+  }, [chatUser?._id]);
 
 
   if (!chatUser) {
@@ -56,9 +64,8 @@ const ChatWindow = ({ chatUser, onMessageSent, onBack }) => {
     );
   }
 
-  // index of my last message (for the seen/delivered tick)
   const lastMineIndex = messages.reduce(
-    (last, m, i) => (m.senderId === user._id ? i : last),
+    (last, m, i) => (!m.isSystem && String(m.senderId) === String(user._id) ? i : last),
     -1
   );
 
@@ -81,7 +88,6 @@ const ChatWindow = ({ chatUser, onMessageSent, onBack }) => {
   };
 
   const onDragLeave = (e) => {
-    // ignore leave events fired when moving over child elements
     if (!e.currentTarget.contains(e.relatedTarget)) setDragging(false);
   };
 
@@ -102,9 +108,12 @@ const ChatWindow = ({ chatUser, onMessageSent, onBack }) => {
     >
       <ChatHeader
         chatUser={chatUser}
+        meId={user._id}
         isTyping={isTyping}
+        typingLabel={typingLabel}
         isOnline={onlineUsers.includes(chatUser._id)}
         onBack={onBack}
+        onOpenInfo={chatUser.isGroup ? onOpenInfo : () => setShowInfo(true)}
       />
 
       <div
@@ -112,8 +121,16 @@ const ChatWindow = ({ chatUser, onMessageSent, onBack }) => {
         onLoadCapture={handleMediaLoad}
         onLoadedMetadataCapture={handleMediaLoad}
       >
-        {messages.map((msg, index) =>
-          msg.senderId === user._id ? (
+        {messages.map((msg, index) => {
+          if (msg.isSystem) {
+            return msg.systemText ? (
+              <div key={msg._id} className="system-message">
+                <span>{msg.systemText}</span>
+              </div>
+            ) : null;
+          }
+
+          return String(msg.senderId) === String(user._id) ? (
             <SentMessage
               key={msg._id}
               msg={msg}
@@ -124,15 +141,9 @@ const ChatWindow = ({ chatUser, onMessageSent, onBack }) => {
               {...shared}
             />
           ) : (
-            <ReceivedMessage
-              key={msg._id}
-              msg={msg}
-              user={user}
-              chatUser={chatUser}
-              {...shared}
-            />
-          )
-        )}
+            <ReceivedMessage key={msg._id} msg={msg} user={user} chatUser={chatUser} {...shared} />
+          );
+        })}
 
         {isTyping && (
           <div className="typing-indicator received">
@@ -145,8 +156,6 @@ const ChatWindow = ({ chatUser, onMessageSent, onBack }) => {
         <div ref={bottomRef} />
       </div>
 
-      {/* key remounts the input when switching chats, which discards any
-          in-progress recording so it can never go to the wrong person */}
       <MessageInput
         key={chatUser._id}
         text={text}
@@ -171,6 +180,14 @@ const ChatWindow = ({ chatUser, onMessageSent, onBack }) => {
         onSend={handleSendMedia}
         onCancel={clearAttachment}
       />
+      {showInfo && !chatUser.isGroup && (
+        <UserInfo
+          chatUser={chatUser}
+          isOnline={onlineUsers.includes(chatUser._id)}
+          messages={messages}
+          onClose={() => setShowInfo(false)}
+        />
+      )}
     </div>
   );
 };
