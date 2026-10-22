@@ -396,16 +396,24 @@ exports.reactToMessage = async (req, res) => {
             });
         }
 
-        const existingReactionIndex = message.reactions.findIndex((reaction) => String(reaction.userId) === (String(userId)));
+        const existingReactionIndex = message.reactions.findIndex(
+            (reaction) => String(reaction.userId) === String(userId)
+        );
 
         if (existingReactionIndex !== -1) {
-            message.reactions[
-                existingReactionIndex
-            ].emoji = emoji;
+
+            if (
+                message.reactions[existingReactionIndex].emoji === emoji
+            ) {
+                message.reactions.splice(existingReactionIndex, 1);
+            } else {
+                message.reactions[existingReactionIndex].emoji = emoji;
+            }
+
         } else {
             message.reactions.push({
                 userId,
-                emoji
+                emoji,
             });
         }
 

@@ -3,6 +3,7 @@ const Chat = require("../models/ChatSchema");
 const Message = require("../models/Messages");
 const User = require("../models/User");
 const Contact = require("../models/Contact");
+const cloudinaryCleanup = require ("../utils/cloudinaryCleanup")
 const cloudinary = require("../config/cloudinary");
 const {
     joinRoom,
@@ -288,7 +289,6 @@ exports.updateGroupAvatar = async (req, res) => {
     try {
         const { chat, error, code } = await getGroupAsAdmin(req.params.chatId, req.user._id);
         if (error) {
-            // multer pehle hi upload kar chuka hota hai -> wapas delete
             if (req.file?.filename) await cloudinary.uploader.destroy(req.file.filename).catch(() => { });
             return res.status(code).json({ status: false, message: error });
         }
@@ -296,7 +296,6 @@ exports.updateGroupAvatar = async (req, res) => {
         if (!req.file)
             return res.status(400).json({ status: false, message: "Image required" });
 
-        // purani pfp cloudinary se hatao
         if (chat.groupAvatarPublicId) {
             await cloudinary.uploader.destroy(chat.groupAvatarPublicId).catch(() => { });
         }
@@ -309,7 +308,6 @@ exports.updateGroupAvatar = async (req, res) => {
         const memberIds = chat.participants.map(String);
 
         await pushGroup(chat._id, "groupUpdated");
-        // actor ko bhi bhejo (realtime ke liye)
         await emitSystemMessages([sysMsg], memberIds);
 
         res.json({
@@ -436,6 +434,8 @@ exports.leaveGroup = async (req, res) => {
         );
 
         if (chat.participants.length === 0) {
+            const msgs = await Message.find({ chatId }).select("media");
+            await cloudinaryCleanup(msgs);
             await Message.deleteMany({ chatId });
             await chat.deleteOne();
             leaveRoom(req.user._id, chatId);
