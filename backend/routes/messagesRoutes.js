@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { sendMessage, getMessages, searchUserByPhone, getConversations, markAsSeen, deleteForMe, deleteForEveryone, reactToMessage} = require("../controllers/messageController");
+const { sendMessage, getMessages, searchUserByPhone, getConversations, markAsSeen, deleteForMe, deleteForEveryone, reactToMessage, } = require("../controllers/messageController");
 const { protect } = require("../middleware/authMiddleware");
 const upload = require("../middleware/mediaMiddleware");    
 
