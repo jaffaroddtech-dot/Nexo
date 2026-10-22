@@ -55,6 +55,8 @@ const ReceivedMessage = ({
               setOpenReactionId(openReactionId === msg._id ? null : msg._id)
             }
             onSelect={(emoji) => onReact(msg, emoji)}
+            reactions={msg.reactions}
+            meId={user._id}
           />
 
           {openMenuId === msg._id && (
@@ -77,7 +79,12 @@ const ReceivedMessage = ({
       )}
     </div>
 
-    <ReactionDisplay reactions={msg.reactions} />
+    <ReactionDisplay
+      reactions={msg.reactions}
+      user={user}
+      chatUser={chatUser}
+      onToggleReaction={(emoji) => onReact(msg, emoji)}
+    />
   </div>
 );
 

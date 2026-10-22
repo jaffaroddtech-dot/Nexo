@@ -5,7 +5,13 @@ import "../../Components/groups/Group.css";
 import HomeNot from "../../Components/NotLoggedPages/HomeNotLogged/HomeNot.jsx";
 import { useSelector } from "react-redux";
 import { getConversation } from "../../../Apis/messages.js";
-import { getUserChats, normalizeGroup, getMemberName } from "../../../Apis/group.js";
+import {
+  getGroups,
+  leaveGroup,
+  normalizeGroup,
+  getMemberName,
+} from "../../../Apis/group.js";
+import { deleteChat, deleteGroup } from "../../../Apis/chatDelete.js";
 import NewChat from "../../Components/newChat/NewChat.jsx";
 import NewGroup from "../../Components/groups/NewGroup.jsx";
 import GroupInfo from "../../Components/groups/GroupInfo.jsx";
@@ -20,6 +26,9 @@ import {
   Video,
   FileText,
   Mic,
+  Ellipsis,
+  Trash2,
+  LogOut,
 } from "lucide-react";
 import { useSocket } from "../../../SocketContext/sockectContext.jsx";
 import { formatChatTime, getConversationPreview } from "../../Helpers/Helper.js";
@@ -39,6 +48,13 @@ const Home = () => {
   const [groupTyping, setGroupTyping] = useState({}); // { chatId: [senderId] }
   const [unreadMap, setUnreadMap] = useState({}); // { userId: count }
   const [groupUnreadMap, setGroupUnreadMap] = useState({}); // { chatId: count }
+
+  // delete chat
+  const [menu, setMenu] = useState(null); // { x, y, item }
+  const [confirmItem, setConfirmItem] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmError, setConfirmError] = useState("");
+
   const location = useLocation();
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
@@ -61,6 +77,26 @@ const Home = () => {
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // context menu: bahar click / scroll / resize / Esc par band
+  useEffect(() => {
+    if (!menu) return;
+    const close = () => setMenu(null);
+    const onKeyDown = (e) => e.key === "Escape" && close();
+
+    window.addEventListener("click", close);
+    window.addEventListener("scroll", close, true);
+    window.addEventListener("resize", close);
+    window.addEventListener("contextmenu", close);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("click", close);
+      window.removeEventListener("scroll", close, true);
+      window.removeEventListener("resize", close);
+      window.removeEventListener("contextmenu", close);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [menu]);
 
   const fetchConversations = useCallback(async () => {
     try {
@@ -86,7 +122,7 @@ const Home = () => {
 
   const fetchGroups = useCallback(async (applyUnread = true) => {
     try {
-      const res = await getUserChats();
+      const res = await getGroups();
 
       if (res.status) {
         const list = res.groups.map(normalizeGroup);
@@ -131,6 +167,19 @@ const Home = () => {
     });
     setSelectedChat((prev) => (String(prev?._id) === String(chatId) ? null : prev));
     setShowGroupInfo(false);
+  }, []);
+
+  // 1-1 chat list se hata do
+  const removeConversationLocally = useCallback((userId) => {
+    setConversations((prev) =>
+      prev.filter((c) => String(c.user._id) !== String(userId))
+    );
+    setUnreadMap((prev) => {
+      const updated = { ...prev };
+      delete updated[userId];
+      return updated;
+    });
+    setSelectedChat((prev) => (String(prev?._id) === String(userId) ? null : prev));
   }, []);
 
   const updateGroupWithMessage = useCallback(
@@ -312,6 +361,10 @@ const Home = () => {
     const handleGroupMessageDeleted = () => fetchGroups(false);
     const handleRemoved = ({ chatId }) => removeGroupLocally(chatId);
 
+    /* ---------- CHAT / GROUP DELETED (doosre ne delete ki) ---------- */
+    const handleChatDeleted = ({ userId }) => removeConversationLocally(userId);
+    const handleGroupDeleted = ({ chatId }) => removeGroupLocally(chatId);
+
     socket.on("newMessage", handleNewMessage);
     socket.on("messageDeleted", handleMessageDeleted);
     socket.on("userTyping", handleUserTyping);
@@ -325,6 +378,9 @@ const Home = () => {
     socket.on("addedToGroup", applyGroupUpdate);
     socket.on("groupUpdated", applyGroupUpdate);
     socket.on("removedFromGroup", handleRemoved);
+
+    socket.on("chatDeleted", handleChatDeleted);
+    socket.on("groupDeleted", handleGroupDeleted);
 
     return () => {
       socket.off("newMessage", handleNewMessage);
@@ -340,6 +396,9 @@ const Home = () => {
       socket.off("addedToGroup", applyGroupUpdate);
       socket.off("groupUpdated", applyGroupUpdate);
       socket.off("removedFromGroup", handleRemoved);
+
+      socket.off("chatDeleted", handleChatDeleted);
+      socket.off("groupDeleted", handleGroupDeleted);
     };
   }, [
     socket,
@@ -349,6 +408,7 @@ const Home = () => {
     updateGroupWithMessage,
     applyGroupUpdate,
     removeGroupLocally,
+    removeConversationLocally,
     fetchConversations,
     fetchGroups,
   ]);
@@ -413,6 +473,80 @@ const Home = () => {
     return <HomeNot />;
   }
 
+  /* ---------- delete chat ---------- */
+  const isGroupAdmin = (g) =>
+    String(g.groupAdmin?._id || g.groupAdmin) === String(user._id);
+
+  // right-click ya 3 dots
+  const openMenu = (e, item) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setMenu({
+      x: Math.max(8, Math.min(e.clientX, window.innerWidth - 210)),
+      y: Math.max(8, Math.min(e.clientY, window.innerHeight - 70)),
+      item,
+    });
+  };
+
+  const getMenuLabel = (item) =>
+    !item.isGroup
+      ? "Delete chat"
+      : isGroupAdmin(item.chat)
+        ? "Delete group"
+        : "Leave group";
+
+  const getConfirmCopy = (item) => {
+    if (!item.isGroup)
+      return {
+        title: "Delete chat?",
+        text: `This chat with ${item.name} will be removed from your chats.`,
+        action: "Delete chat",
+      };
+    if (isGroupAdmin(item.chat))
+      return {
+        title: "Delete group?",
+        text: `"${item.name}" and all its messages and media will be permanently deleted for every member. This can't be undone.`,
+        action: "Delete group",
+      };
+    return {
+      title: "Leave group?",
+      text: `You will no longer receive messages from "${item.name}".`,
+      action: "Leave group",
+    };
+  };
+
+  const closeConfirm = () => {
+    if (deleting) return;
+    setConfirmItem(null);
+    setConfirmError("");
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!confirmItem || deleting) return;
+    const item = confirmItem;
+
+    setDeleting(true);
+    setConfirmError("");
+    try {
+      let res;
+      if (!item.isGroup) res = await deleteChat(item.key);
+      else if (isGroupAdmin(item.chat)) res = await deleteGroup(item.key);
+      else res = await leaveGroup(item.key);
+
+      if (res.status) {
+        if (item.isGroup) removeGroupLocally(item.key);
+        else removeConversationLocally(item.key);
+        setConfirmItem(null);
+      } else {
+        setConfirmError(res.message || "Something went wrong");
+      }
+    } catch (err) {
+      setConfirmError(err?.response?.data?.message || "Something went wrong");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   const unreadOf = (key) => unreadMap[key] || groupUnreadMap[key] || 0;
 
   const query = search.toLowerCase();
@@ -427,6 +561,8 @@ const Home = () => {
     Object.keys(unreadMap).length + Object.keys(groupUnreadMap).length;
 
   const contacts = conversations.map((c) => c.user);
+
+  const confirmCopy = confirmItem ? getConfirmCopy(confirmItem) : null;
 
   return (
     <div className="Main">
@@ -497,16 +633,17 @@ const Home = () => {
                 const typingText = item.isGroup
                   ? `${getMemberName(item.chat, typingIds?.[0], "Someone")} is typing...`
                   : "typing...";
+                const menuOpen = menu?.item.key === item.key;
 
                 return (
                   <div
                     key={item.key}
                     role="button"
                     tabIndex={0}
-                    className={`messages ${isActive ? "is-active" : ""} ${
-                      unreadCount > 0 ? "is-unread" : ""
-                    }`}
+                    className={`messages ${isActive ? "is-active" : ""} ${unreadCount > 0 ? "is-unread" : ""
+                      } ${menuOpen ? "menu-open" : ""}`}
                     onClick={() => handleSelectChat(item.chat)}
+                    onContextMenu={(e) => openMenu(e, item)}
                     onKeyDown={(e) => e.key === "Enter" && handleSelectChat(item.chat)}
                   >
                     <div className="profilePictures">
@@ -558,6 +695,15 @@ const Home = () => {
                         )}
                       </div>
                     </div>
+
+                    <button
+                      type="button"
+                      className="chat-row-menu-btn"
+                      aria-label="Chat options"
+                      onClick={(e) => openMenu(e, item)}
+                    >
+                      <Ellipsis size={16} />
+                    </button>
                   </div>
                 );
               })
@@ -623,6 +769,72 @@ const Home = () => {
           onGroupChange={applyGroupUpdate}
           onLeft={removeGroupLocally}
         />
+      )}
+
+      {/* RIGHT-CLICK / 3 DOTS MENU */}
+      {menu && (
+        <div
+          className="chat-context-menu"
+          style={{ left: menu.x, top: menu.y }}
+          onClick={(e) => e.stopPropagation()}
+          onContextMenu={(e) => e.preventDefault()}
+        >
+          <button
+            type="button"
+            onClick={() => {
+              setConfirmItem(menu.item);
+              setConfirmError("");
+              setMenu(null);
+            }}
+          >
+            {menu.item.isGroup && !isGroupAdmin(menu.item.chat) ? (
+              <LogOut size={16} />
+            ) : (
+              <Trash2 size={16} />
+            )}
+            {getMenuLabel(menu.item)}
+          </button>
+        </div>
+      )}
+
+      {/* CONFIRM POPUP */}
+      {confirmItem && confirmCopy && (
+        <div className="gm-overlay" onClick={closeConfirm}>
+          <div
+            className="gm-modal"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+          >
+            <div className="gm-header">
+              <h4>{confirmCopy.title}</h4>
+            </div>
+
+            <div className="gm-body">
+              <p className="gm-confirm-text">{confirmCopy.text}</p>
+              {confirmError && <div className="gm-error">{confirmError}</div>}
+            </div>
+
+            <div className="gm-footer">
+              <button
+                type="button"
+                className="gm-btn"
+                onClick={closeConfirm}
+                disabled={deleting}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="gm-btn danger-fill"
+                onClick={handleConfirmDelete}
+                disabled={deleting}
+              >
+                {deleting ? "Deleting..." : confirmCopy.action}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
