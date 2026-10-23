@@ -1,9 +1,10 @@
 import React, { memo } from "react";
-import { CheckCheck, Ellipsis } from "lucide-react";
+import { CheckCheck, Ellipsis, Pin } from "lucide-react";
 import MessageContent from "./Messagecontent";
 import ReactionPicker from "./Reactionpicker";
 import ReactionDisplay from "./Reactiondisplay";
 import { formatTime } from "../../../Helpers/Helper";
+import { isPinned } from "./pinUtils.js";
 
 const SentMessage = ({
   msg,
@@ -18,11 +19,12 @@ const SentMessage = ({
   onReply,
   onDeleteForMe,
   onDeleteForEveryone,
+  onPinRequest, onUnpin
 }) => (
-  <div className="sent-message-wrapper">
+  <div className="sent-message-wrapper" id={`msg-${msg._id}`} tabIndex={-1}>
     <div className="sent-row">
       {!msg.isDeleted && (
-        <div className="sent-menu-wrapper">
+        <div className="sent-menu-wrapper"  >
           <ReactionPicker
             isOpen={openReactionId === msg._id}
             onToggle={() =>
@@ -61,6 +63,15 @@ const SentMessage = ({
               <button type="button" onClick={() => onDeleteForMe(msg._id)}>
                 Delete for Me
               </button>
+              {isPinned(msg) ? (
+                <button type="button" className="menu-pin" onClick={() => { onUnpin(msg._id); setOpenMenuId(null); }}>
+                  Unpin
+                </button>
+              ) : (
+                <button type="button" className="menu-pin" onClick={() => { onPinRequest(msg); setOpenMenuId(null); }}>
+                  Pin
+                </button>
+              )}
             </div>
           )}
         </div>
@@ -70,6 +81,9 @@ const SentMessage = ({
         <MessageContent msg={msg} user={user} chatUser={chatUser} />
 
         <div className="message-meta">
+          {isPinned(msg) && (
+            <span className="pin-flag"><Pin size={11} /></span>
+          )}
           <span className="message-time-chat">{formatTime(msg.createdAt)}</span>
 
           {isLastMine && !msg.isDeleted && (

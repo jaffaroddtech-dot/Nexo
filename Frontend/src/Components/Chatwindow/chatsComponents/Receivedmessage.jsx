@@ -1,10 +1,11 @@
 import React, { memo } from "react";
-import { Ellipsis } from "lucide-react";
 import MessageContent from "./Messagecontent";
 import ReactionPicker from "./Reactionpicker";
 import ReactionDisplay from "./Reactiondisplay";
 import { formatTime } from "../../../Helpers/Helper";
 import { getMemberName, getSenderColor } from "../../../../Apis/group";
+import { CheckCheck, Ellipsis, Pin } from "lucide-react";
+import { isPinned } from "./pinUtils.js";
 
 const ReceivedMessage = ({
   msg,
@@ -17,8 +18,10 @@ const ReceivedMessage = ({
   onDeleteForMe,
   user,
   chatUser,
+  onPinRequest,
+  onUnpin
 }) => (
-  <div className="received-message-wrapper">
+  <div className="received-message-wrapper" id={`msg-${msg._id}`} tabIndex={-1}>
     <div className="received-row">
       <div className="received" onDoubleClick={() => onReply(msg)}>
         {chatUser?.isGroup && (
@@ -32,6 +35,9 @@ const ReceivedMessage = ({
 
         <MessageContent msg={msg} user={user} chatUser={chatUser} />
         <div className="message-meta">
+          {isPinned(msg) && (
+            <span className="pin-flag"><Pin size={11} /></span>
+          )}
           <span className="message-time-chat">{formatTime(msg.createdAt)}</span>
         </div>
       </div>
@@ -61,9 +67,6 @@ const ReceivedMessage = ({
 
           {openMenuId === msg._id && (
             <div className="received-menu-dropdown">
-              <button type="button" onClick={() => onDeleteForMe(msg._id)}>
-                Delete for Me
-              </button>
               <button
                 type="button"
                 onClick={() => {
@@ -73,6 +76,18 @@ const ReceivedMessage = ({
               >
                 Reply
               </button>
+              <button type="button" onClick={() => onDeleteForMe(msg._id)}>
+                Delete for Me
+              </button>
+              {isPinned(msg) ? (
+                <button type="button" className="menu-pin" onClick={() => { onUnpin(msg._id); setOpenMenuId(null); }}>
+                  Unpin
+                </button>
+              ) : (
+                <button type="button" className="menu-pin" onClick={() => { onPinRequest(msg); setOpenMenuId(null); }}>
+                  Pin
+                </button>
+              )}
             </div>
           )}
         </div>

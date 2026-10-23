@@ -9,6 +9,8 @@ import {
   deleteMessageForMe,
   deleteMessageForEveryone,
   reactToMessage,
+  pinMessage, 
+  unpinMessage, 
 } from "../../../../Apis/messages";
 import {
   getGroupMessages,
@@ -17,12 +19,21 @@ import {
 } from "../../../../Apis/group.js";
 
 import { MAX_FILE_SIZE, formatFileSize, getFileKind } from "./mediaUtils.js";
+import { isPinned } from "./pinUtils.js"; 
 
 // 1-1 ya group, sahi API par bhej do
 const sendTo = (target, payload, onProgress) =>
   target.isGroup
     ? sendGroupMessage(target._id, payload, onProgress)
     : sendMessage(payload, onProgress);
+
+// NEW: message list mein ek message ke pin fields update karo
+const withPin = (list, { messageId, pinnedBy, pinnedAt, pinnedUntil }) =>
+  list.map((m) =>
+    String(m._id) === String(messageId)
+      ? { ...m, pinnedBy, pinnedAt, pinnedUntil }
+      : m
+  );
 
 const useChatWindow = (chatUser, onMessageSent) => {
   const { user } = useSelector((state) => state.auth);
@@ -202,7 +213,14 @@ const useChatWindow = (chatUser, onMessageSent) => {
         setMessages((prev) =>
           prev.map((m) =>
             String(m._id) === String(messageId)
-              ? { ...m, isDeleted: true, text: "", caption: "", media: null }
+              ? {
+                ...m,
+                isDeleted: true,
+                text: "",
+                caption: "",
+                media: null,
+                pinnedUntil: null, 
+              }
               : m
           )
         );
@@ -214,6 +232,13 @@ const useChatWindow = (chatUser, onMessageSent) => {
           prev.map((m) => (String(m._id) === String(messageId) ? { ...m, reactions } : m))
         );
       };
+
+      // NEW: pin / unpin update
+      const onPin = (p) => {
+        if (String(p.chatId) !== chatId) return;
+        setMessages((prev) => withPin(prev, p));
+      };
+
       const onSystem = (msg) => {
         if (String(msg.chatId) !== String(chatUser?._id)) return;
         setMessages((prev) => (prev.some((m) => m._id === msg._id) ? prev : [...prev, msg]));
@@ -226,6 +251,7 @@ const useChatWindow = (chatUser, onMessageSent) => {
       socket.on("groupSeenUpdate", onSeen);
       socket.on("groupMessageDeleted", onDeleted);
       socket.on("groupMessageReactionUpdate", onReaction);
+      socket.on("messagePinUpdate", onPin); 
 
       return () => {
         socket.off("newGroupMessage", onNew);
@@ -235,6 +261,7 @@ const useChatWindow = (chatUser, onMessageSent) => {
         socket.off("groupMessageDeleted", onDeleted);
         socket.off("groupMessageReactionUpdate", onReaction);
         socket.off("groupSystemMessage", onSystem);
+        socket.off("messagePinUpdate", onPin); 
       };
     }
 
@@ -277,7 +304,14 @@ const useChatWindow = (chatUser, onMessageSent) => {
       setMessages((prev) =>
         prev.map((msg) =>
           msg._id === messageId
-            ? { ...msg, isDeleted: true, text: "", caption: "", media: null }
+            ? {
+              ...msg,
+              isDeleted: true,
+              text: "",
+              caption: "",
+              media: null,
+              pinnedUntil: null, 
+            }
             : msg
         )
       );
@@ -291,12 +325,18 @@ const useChatWindow = (chatUser, onMessageSent) => {
       );
     };
 
+    // NEW: pin / unpin update
+    const handlePinUpdate = (p) => {
+      setMessages((prev) => withPin(prev, p));
+    };
+
     socket.on("newMessage", handleNewMessage);
     socket.on("userTyping", handleUserTyping);
     socket.on("userStopTyping", handleUserStopTyping);
     socket.on("messagesSeenUpdate", handleMessagesSeen);
     socket.on("messageDeleted", handleMessageDeleted);
     socket.on("messageReactionUpdate", handleReactionUpdate);
+    socket.on("messagePinUpdate", handlePinUpdate); 
 
     return () => {
       socket.off("newMessage", handleNewMessage);
@@ -305,6 +345,7 @@ const useChatWindow = (chatUser, onMessageSent) => {
       socket.off("messagesSeenUpdate", handleMessagesSeen);
       socket.off("messageDeleted", handleMessageDeleted);
       socket.off("messageReactionUpdate", handleReactionUpdate);
+      socket.off("messagePinUpdate", handlePinUpdate); 
     };
   }, [socket, chatUser?._id, chatUser?.isGroup, user?._id]);
 
@@ -319,7 +360,6 @@ const useChatWindow = (chatUser, onMessageSent) => {
     return "Several people are typing...";
   }, [isGroup, typingIds, chatUser]);
 
-  // group mein "seen" = baaki sab members ne padh liya
   const meId = user?._id;
   const memberCount = chatUser?.participants?.length || 0;
   const displayMessages = useMemo(() => {
@@ -534,7 +574,14 @@ const useChatWindow = (chatUser, onMessageSent) => {
           setMessages((prev) =>
             prev.map((msg) =>
               String(msg._id) === String(messageId)
-                ? { ...msg, isDeleted: true, text: "", caption: "", media: null }
+                ? {
+                  ...msg,
+                  isDeleted: true,
+                  text: "",
+                  caption: "",
+                  media: null,
+                  pinnedUntil: null, 
+                }
                 : msg
             )
           );
@@ -587,6 +634,58 @@ const useChatWindow = (chatUser, onMessageSent) => {
       }
     },
     [socket, chatUserId]
+  );
+
+  // ---------- NEW: PIN / UNPIN ----------
+  const handlePin = useCallback(async (messageId, duration) => {
+    try {
+      const res = await pinMessage(messageId, duration);
+      if (res.status) {
+        setMessages((prev) =>
+          withPin(prev, {
+            messageId,
+            pinnedBy: res.message.pinnedBy,
+            pinnedAt: res.message.pinnedAt,
+            pinnedUntil: res.message.pinnedUntil,
+          })
+        );
+        return { ok: true };
+      }
+      return { ok: false, message: res.message };
+    } catch (err) {
+      return {
+        ok: false,
+        message: err?.response?.data?.message || "Could not pin message",
+      };
+    }
+  }, []);
+
+  const handleUnpin = useCallback(async (messageId) => {
+    try {
+      const res = await unpinMessage(messageId);
+      if (res.status) {
+        setMessages((prev) =>
+          withPin(prev, {
+            messageId,
+            pinnedBy: null,
+            pinnedAt: null,
+            pinnedUntil: null,
+          })
+        );
+      }
+    } catch (err) {
+      console.error("Unpin error:", err);
+    }
+    setOpenMenuId(null);
+  }, []);
+
+  // banner ke liye: active pins, newest first
+  const pinnedMessages = useMemo(
+    () =>
+      messages
+        .filter(isPinned)
+        .sort((a, b) => new Date(b.pinnedAt) - new Date(a.pinnedAt)),
+    [messages]
   );
 
   useEffect(() => {
@@ -658,6 +757,10 @@ const useChatWindow = (chatUser, onMessageSent) => {
     handleDeleteForMe,
     handleDeleteForEveryone,
     handleReaction,
+    // pin
+    handlePin,
+    handleUnpin,
+    pinnedMessages,
     // media
     attachment,
     caption,

@@ -333,12 +333,7 @@ const GroupInfo = ({ group, me, contacts, onClose, onGroupChange, onLeft }) => {
                             >
                                 Cancel
                             </button>
-                            <button
-                                type="button"
-                                className="gm-btn danger-fill"
-                                onClick={handleConfirm}
-                                disabled={confirmBusy}
-                            >
+                            <button type="button" className="gm-btn danger-fill" onClick={handleConfirm} disabled={confirmBusy}>
                                 {confirmBusy ? confirmCopy.loading : confirmCopy.action}
                             </button>
                         </div>

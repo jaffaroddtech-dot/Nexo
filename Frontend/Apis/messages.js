@@ -33,8 +33,16 @@ export const deleteMessageForEveryone = async (messageId) => {
 export const reactToMessage = async (messageId, emoji) => {
     const res = await requests.patch(`messages/react/${messageId}`, { emoji });
     return res;
-}
+};
 export const searchUserByPhone = async (phone) => {
     const res = await requests.get(`/messages/search-user/${phone}`);
     return res;
-}
+};
+export const pinMessage = async (messageId, duration) => {
+    const res = await requests.put(`/messages/pin/${messageId}`, {duration});
+    return res
+};
+export const unpinMessage = async (messageId) => {
+    const res = await requests.put(`/messages/unpin/${messageId}`);
+    return res
+};

@@ -7,10 +7,12 @@ import UserInfo from "./chatsComponents/userInfo";
 import ReceivedMessage from "./chatsComponents/Receivedmessage";
 import MessageInput from "./chatsComponents/Messageinput";
 import MediaPreview from "./chatsComponents/Mediapreview";
+import PinnedBanner from "./chatsComponents/PinnedBanner";
+import PinDurationModal from "./chatsComponents/PinDurationModal";
 import { MessageSquareText } from "lucide-react";
 import EmptyState from "../emptyState/EmptyState";
 
-const ChatWindow = ({ chatUser, onMessageSent, onBack, onOpenInfo }) => {
+const ChatWindow = ({ chatUser, onMessageSent, onBack, onOpenInfo,}) => {
   const {
     user,
     onlineUsers,
@@ -41,16 +43,20 @@ const ChatWindow = ({ chatUser, onMessageSent, onBack, onOpenInfo }) => {
     handleSendMedia,
     handleMediaLoad,
     handleSendVoice,
+    handlePin,       
+    handleUnpin,     
+    pinnedMessages, 
     voiceSending,
   } = useChatWindow(chatUser, onMessageSent);
 
   const [dragging, setDragging] = useState(false);
-
+  const [pinTarget, setPinTarget] = useState(null);
   const [showInfo, setShowInfo] = useState(false);
 
   // chat badle to info band
   useEffect(() => {
     setShowInfo(false);
+    setPinTarget(null);
   }, [chatUser?._id]);
 
 
@@ -77,6 +83,8 @@ const ChatWindow = ({ chatUser, onMessageSent, onBack, onOpenInfo }) => {
     onReact: handleReaction,
     onReply: setReplyMessage,
     onDeleteForMe: handleDeleteForMe,
+    onPinRequest: setPinTarget,
+    onUnpin: handleUnpin
   };
 
   const hasFiles = (e) => Array.from(e.dataTransfer?.types || []).includes("Files");
@@ -98,6 +106,13 @@ const ChatWindow = ({ chatUser, onMessageSent, onBack, onOpenInfo }) => {
     const file = e.dataTransfer.files?.[0];
     if (file) selectFile(file);
   };
+  const jumpToMessage = (id) => {
+    const el = document.getElementById(`msg-${id}`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: "smooth", block: "center" });
+    el.classList.add("msg-highlight");
+    setTimeout(() => el.classList.remove("msg-highlight"), 1500);
+  };
 
   return (
     <div
@@ -115,7 +130,7 @@ const ChatWindow = ({ chatUser, onMessageSent, onBack, onOpenInfo }) => {
         onBack={onBack}
         onOpenInfo={chatUser.isGroup ? onOpenInfo : () => setShowInfo(true)}
       />
-
+      <PinnedBanner pins={pinnedMessages} onJump={jumpToMessage} />
       <div
         className="chat-body"
         onLoadCapture={handleMediaLoad}
@@ -186,6 +201,13 @@ const ChatWindow = ({ chatUser, onMessageSent, onBack, onOpenInfo }) => {
           isOnline={onlineUsers.includes(chatUser._id)}
           messages={messages}
           onClose={() => setShowInfo(false)}
+        />
+      )}
+      {pinTarget && (
+        <PinDurationModal
+          message={pinTarget}
+          onConfirm={handlePin}
+          onClose={() => setPinTarget(null)}
         />
       )}
     </div>
