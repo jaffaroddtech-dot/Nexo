@@ -1,8 +1,9 @@
 const Message = require("../models/Messages");
 const Contact = require("../models/Contact");
+const Chat = require('../models/ChatSchema');
 const User = require("../models/User");
-const cloudinary = require("../config/cloudinary");
-const { getReceiverSocketId, getIO, createNotification } = require("../Socket/socket");
+const cloudinary = require("..  /config/cloudinary");
+const { getReceiverSocketId, getIO, createNotification, emitToRoom, emitToUser } = require("../Socket/socket");
 
 
 exports.sendMessage = async (req, res) => {
@@ -353,6 +354,9 @@ exports.deleteForEveryone = async (req, res) => {
         message.media = null;
         message.text = "";
         message.caption = "";
+        message.pinnedBy = null;     
+        message.pinnedAt = null;     
+        message.pinnedUntil = null;
 
         await message.save();
 
@@ -460,5 +464,130 @@ exports.searchUserByPhone = async (req, res) => {
         res.json({ status: true, user });
     } catch (err) {
         res.status(500).json({ status: false, message: err.message, error: console.error(err) });
+    }
+};
+
+
+//---HELPERS---
+const PIN_DURATIONS = {
+    "24h": 24 * 60 * 60 * 1000,
+    "7d": 7 * 24 * 60 * 60 * 1000,
+    "30d": 30 * 24 * 60 * 60 * 1000,
+};
+const MAX_PINS = 3;
+
+const canAccess = async (message, userId) => {
+    if (message.chatId) {
+        const chat = await Chat.findOne({
+            _id: message.chatId,
+            participants: userId,
+        }).select("_id");
+        return Boolean(chat);
+    }
+    return [String(message.senderId), String(message.receiverId)].includes(String(userId));
+};
+
+const countActivePins = (message) => {
+    const base = message.chatId
+        ? { chatId: message.chatId }
+        : {
+            chatId: null,
+            $or: [
+                { senderId: message.senderId, receiverId: message.receiverId },
+                { senderId: message.receiverId, receiverId: message.senderId },
+            ],
+        };
+
+    return Message.countDocuments({
+        ...base,
+        isDeleted: false,
+        pinnedUntil: { $gt: new Date() },
+    });
+};
+
+const broadcastPin = (message) => {
+    const payload = {
+        messageId: message._id,
+        chatId: message.chatId || null,
+        pinnedBy: message.pinnedBy,
+        pinnedAt: message.pinnedAt,
+        pinnedUntil: message.pinnedUntil,
+    };
+
+    if (message.chatId) {
+        emitToRoom(message.chatId, "messagePinUpdate", payload);
+    } else {
+        emitToUser(message.senderId, "messagePinUpdate", payload);
+        emitToUser(message.receiverId, "messagePinUpdate", payload);
+    }
+};
+//--------------------------------------------xx---------------------------------------------------
+exports.pinMessage = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { messageId } = req.params;
+        const ms = PIN_DURATIONS[req.body.duration || "7d"];
+
+        if (!ms) {
+            return res.status(400).json({ status: false, message: "Invalid duration" });
+        }
+
+        const message = await Message.findById(messageId);
+        if (!message || message.isDeleted || message.isSystem) {
+            return res.status(404).json({ status: false, message: "Message not found" });
+        }
+
+        if (!(await canAccess(message, userId))) {
+            return res.status(403).json({ status: false, message: "Not allowed" });
+        }
+
+        // pehle se pinned hai to sirf duration renew hogi, limit check nahi
+        const alreadyActive = message.pinnedUntil && message.pinnedUntil > new Date();
+        if (!alreadyActive && (await countActivePins(message)) >= MAX_PINS) {
+            return res.status(400).json({
+                status: false,
+                message: `You can pin up to ${MAX_PINS} messages. Unpin one first.`,
+            });
+        }
+
+        message.pinnedBy = userId;
+        message.pinnedAt = new Date();
+        message.pinnedUntil = new Date(Date.now() + ms);
+        await message.save();
+
+        broadcastPin(message);
+
+        return res.status(200).json({ status: true, message });
+    } catch (error) {
+        console.error("Pin message error:", error);
+        return res.status(500).json({ status: false, message: "Server error" });
+    }
+};
+
+exports.unpinMessage = async (req, res) => {
+    try {
+        const userId = req.user._id;
+        const { messageId } = req.params;
+
+        const message = await Message.findById(messageId);
+        if (!message) {
+            return res.status(404).json({ status: false, message: "Message not found" });
+        }
+
+        if (!(await canAccess(message, userId))) {
+            return res.status(403).json({ status: false, message: "Not allowed" });
+        }
+
+        message.pinnedBy = null;
+        message.pinnedAt = null;
+        message.pinnedUntil = null;
+        await message.save();
+
+        broadcastPin(message);
+
+        return res.status(200).json({ status: true, message });
+    } catch (error) {
+        console.error("Unpin message error:", error);
+        return res.status(500).json({ status: false, message: "Server error" });
     }
 };

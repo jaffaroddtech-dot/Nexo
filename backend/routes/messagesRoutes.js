@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const { sendMessage, getMessages, searchUserByPhone, getConversations, markAsSeen, deleteForMe, deleteForEveryone, reactToMessage, } = require("../controllers/messageController");
+const { sendMessage, getMessages, searchUserByPhone, getConversations, markAsSeen, deleteForMe, deleteForEveryone, reactToMessage, pinMessage, unpinMessage } = require("../controllers/messageController");
 const { protect } = require("../middleware/authMiddleware");
 const upload = require("../middleware/mediaMiddleware");    
 
@@ -12,5 +12,7 @@ router.delete("/delete-for-me/:messageId", protect, deleteForMe);
 router.delete("/delete-for-everyone/:messageId", protect, deleteForEveryone);
 router.patch("/react/:messageId",protect,reactToMessage);
 router.get("/search-user/:phone", protect, searchUserByPhone);
+router.put("/pin/:messageId", protect, pinMessage);
+router.put("/unpin/:messageId", protect, unpinMessage);
 
 module.exports = router;

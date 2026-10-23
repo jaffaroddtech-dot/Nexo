@@ -88,6 +88,9 @@ const messageSchema = new mongoose.Schema(
       actorId: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
       targetId: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
     },
+    pinnedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },
+    pinnedAt: { type: Date, default: null },
+    pinnedUntil: { type: Date, default: null },
   },
   { timestamps: true }
 );
